@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="360" viewBox="0 0 780 360" role="img" aria-labelledby="title desc">
+  <title id="title">Common Python CLI fixture benchmark snapshot</title>
+  <desc id="desc">Baseline static estimate is 435, optimized static estimate is 202, a 53.56 percent reduction.</desc>
+  <rect width="780" height="360" rx="18" fill="#0b1020"/>
+  <defs>
+    <style>
+      .body{font-family:Arial,Helvetica,sans-serif}
+      .mono{font-family:Menlo,SFMono-Regular,monospace}
+    </style>
+  </defs>
+  <text x="40" y="44" class="body" fill="#f8fafc" font-size="24" font-weight="700">Common Python CLI Fixture</text>
+  <text x="40" y="70" class="body" fill="#a8b3c7" font-size="14">Provider-neutral static estimate using ceil(bytes / 4)</text>
+  <line x1="82" y1="288" x2="718" y2="288" stroke="#314158" stroke-width="2"/>
+  <line x1="82" y1="112" x2="82" y2="288" stroke="#314158" stroke-width="2"/>
+  <g class="body" fill="#64748b" font-size="12">
+    <text x="50" y="292">0</text>
+    <text x="42" y="222">200</text>
+    <text x="42" y="152">400</text>
+    <text x="42" y="116">500</text>
+  </g>
+  <g stroke="#1f2a44" stroke-width="1">
+    <line x1="82" y1="218" x2="718" y2="218"/>
+    <line x1="82" y1="148" x2="718" y2="148"/>
+    <line x1="82" y1="113" x2="718" y2="113"/>
+  </g>
+  <rect x="205" y="136" width="142" height="152" rx="12" fill="#2f6df6"/>
+  <rect x="433" y="217" width="142" height="71" rx="12" fill="#34d399"/>
+  <text x="276" y="122" text-anchor="middle" class="mono" fill="#dbeafe" font-size="22" font-weight="700">435</text>
+  <text x="504" y="203" text-anchor="middle" class="mono" fill="#bbf7d0" font-size="22" font-weight="700">202</text>
+  <text x="276" y="322" text-anchor="middle" class="body" fill="#f8fafc" font-size="17" font-weight="700">Baseline</text>
+  <text x="504" y="322" text-anchor="middle" class="body" fill="#f8fafc" font-size="17" font-weight="700">Optimized</text>
+  <rect x="596" y="116" width="122" height="76" rx="14" fill="#172033" stroke="#2c3a52"/>
+  <text x="657" y="146" text-anchor="middle" class="body" fill="#a8b3c7" font-size="14">Reduction</text>
+  <text x="657" y="174" text-anchor="middle" class="mono" fill="#fbbf24" font-size="24" font-weight="700">53.56%</text>
+  <text x="40" y="342" class="body" fill="#a8b3c7" font-size="13">Not exact model tokens, billing usage, live Codex context-window usage, or a universal savings claim.</text>
+</svg>

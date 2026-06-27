@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="300" viewBox="0 0 920 300" role="img" aria-labelledby="title desc">
+  <title id="title">Token Optimizer provider modes</title>
+  <desc id="desc">Static estimate and OpenAI tokenizer modes are offline; OpenAI usage and Anthropic count modes use explicit network calls.</desc>
+  <rect width="920" height="300" rx="18" fill="#0b1020"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10Z" fill="#94a3b8"/>
+    </marker>
+    <style>
+      .body{font-family:Arial,Helvetica,sans-serif}
+      .mono{font-family:Menlo,SFMono-Regular,monospace}
+      .arrow{fill:none;stroke:#94a3b8;stroke-width:2.2;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="38" y="44" class="body" fill="#f8fafc" font-size="24" font-weight="700">Provider modes stay deliberately separate</text>
+  <text x="38" y="70" class="body" fill="#a8b3c7" font-size="14">Offline estimates and live provider usage are labeled as different measurement types.</text>
+  <g>
+    <rect x="42" y="112" width="180" height="58" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="132" y="136" text-anchor="middle" class="mono" fill="#052e16" font-size="15" font-weight="700">static_estimate</text>
+    <text x="132" y="156" text-anchor="middle" class="body" fill="#166534" font-size="13">offline</text>
+    <rect x="42" y="200" width="180" height="58" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="132" y="224" text-anchor="middle" class="mono" fill="#052e16" font-size="15" font-weight="700">openai_tiktoken</text>
+    <text x="132" y="244" text-anchor="middle" class="body" fill="#166534" font-size="13">offline</text>
+  </g>
+  <g>
+    <rect x="370" y="112" width="202" height="58" rx="14" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+    <text x="471" y="136" text-anchor="middle" class="body" fill="#082f49" font-size="16" font-weight="700">local bytes / 4</text>
+    <text x="471" y="156" text-anchor="middle" class="body" fill="#075985" font-size="13">fixture estimate</text>
+    <rect x="370" y="200" width="202" height="58" rx="14" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+    <text x="471" y="224" text-anchor="middle" class="body" fill="#082f49" font-size="16" font-weight="700">local tokenizer</text>
+    <text x="471" y="244" text-anchor="middle" class="body" fill="#075985" font-size="13">OpenAI estimate</text>
+  </g>
+  <g>
+    <rect x="672" y="82" width="206" height="58" rx="14" fill="#ffe4e6" stroke="#e11d48" stroke-width="2"/>
+    <text x="775" y="106" text-anchor="middle" class="mono" fill="#4c0519" font-size="15" font-weight="700">openai_usage</text>
+    <text x="775" y="126" text-anchor="middle" class="body" fill="#9f1239" font-size="13">Responses API, store=false</text>
+    <rect x="672" y="172" width="206" height="58" rx="14" fill="#ffe4e6" stroke="#e11d48" stroke-width="2"/>
+    <text x="775" y="196" text-anchor="middle" class="mono" fill="#4c0519" font-size="15" font-weight="700">anthropic_count</text>
+    <text x="775" y="216" text-anchor="middle" class="body" fill="#9f1239" font-size="13">count-tokens API</text>
+  </g>
+  <path class="arrow" d="M222 141H358"/>
+  <path class="arrow" d="M222 229H358"/>
+  <path class="arrow" d="M572 129C614 129 620 111 660 111"/>
+  <path class="arrow" d="M572 229C614 229 620 201 660 201"/>
+  <text x="296" y="124" class="body" fill="#86efac" font-size="13">offline</text>
+  <text x="600" y="96" class="body" fill="#fda4af" font-size="13">explicit network</text>
+</svg>

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="330" viewBox="0 0 920 330" role="img" aria-labelledby="title desc">
+  <title id="title">Token Optimizer workflow overview</title>
+  <desc id="desc">Project files flow through doctor, audit, outline, and summarize into smaller rereads and a cleaner next AI session.</desc>
+  <rect width="920" height="330" rx="18" fill="#0b1020"/>
+  <g opacity="0.42" stroke="#111c30" stroke-width="1">
+    <path d="M0 55H920M0 110H920M0 165H920M0 220H920M0 275H920"/>
+    <path d="M92 0V330M184 0V330M276 0V330M368 0V330M460 0V330M552 0V330M644 0V330M736 0V330M828 0V330"/>
+  </g>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10Z" fill="#7dd3fc"/>
+    </marker>
+    <style>
+      .label{font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:700}
+      .small{font-family:Arial,Helvetica,sans-serif;font-size:13px}
+      .mono{font-family:Menlo,SFMono-Regular,monospace;font-size:14px}
+      .arrow{fill:none;stroke:#7dd3fc;stroke-width:2.4;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="38" y="42" fill="#f8fafc" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="700">How Token Optimizer keeps context small</text>
+  <text x="38" y="67" fill="#a8b3c7" font-family="Arial,Helvetica,sans-serif" font-size="14">Read first, shape explicit inputs, then carry only the useful continuation state forward.</text>
+  <g>
+    <rect x="38" y="128" width="150" height="72" rx="14" fill="#dbeafe" stroke="#2f6df6" stroke-width="2"/>
+    <text x="113" y="156" text-anchor="middle" class="label" fill="#0f172a">Project files</text>
+    <text x="113" y="180" text-anchor="middle" class="small" fill="#334155">explicit local input</text>
+  </g>
+  <g>
+    <rect x="258" y="92" width="150" height="54" rx="13" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="333" y="124" text-anchor="middle" class="mono" fill="#052e16">doctor / audit</text>
+    <rect x="258" y="164" width="150" height="54" rx="13" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="333" y="196" text-anchor="middle" class="mono" fill="#052e16">outline &lt;file&gt;</text>
+    <rect x="258" y="236" width="150" height="54" rx="13" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="333" y="268" text-anchor="middle" class="mono" fill="#052e16">summarize</text>
+  </g>
+  <g>
+    <rect x="478" y="92" width="150" height="54" rx="13" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+    <text x="553" y="124" text-anchor="middle" class="label" fill="#451a03">Static findings</text>
+    <rect x="478" y="164" width="150" height="54" rx="13" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+    <text x="553" y="196" text-anchor="middle" class="label" fill="#451a03">Structure map</text>
+    <rect x="478" y="236" width="150" height="54" rx="13" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+    <text x="553" y="268" text-anchor="middle" class="label" fill="#451a03">Summary</text>
+  </g>
+  <g>
+    <rect x="698" y="116" width="170" height="64" rx="15" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+    <text x="783" y="144" text-anchor="middle" class="label" fill="#082f49">Smaller rereads</text>
+    <text x="783" y="166" text-anchor="middle" class="small" fill="#075985">less repeated context</text>
+    <rect x="698" y="214" width="170" height="64" rx="15" fill="#f3e8ff" stroke="#7c3aed" stroke-width="2"/>
+    <text x="783" y="242" text-anchor="middle" class="label" fill="#2e1065">Cleaner next</text>
+    <text x="783" y="264" text-anchor="middle" class="small" fill="#581c87">AI coding session</text>
+  </g>
+  <path class="arrow" d="M188 164H246"/>
+  <path class="arrow" d="M188 164C222 164 224 119 246 119"/>
+  <path class="arrow" d="M188 164C222 164 224 263 246 263"/>
+  <path class="arrow" d="M408 119H466"/>
+  <path class="arrow" d="M408 191H466"/>
+  <path class="arrow" d="M408 263H466"/>
+  <path class="arrow" d="M628 119C656 119 662 148 686 148"/>
+  <path class="arrow" d="M628 191H686"/>
+  <path class="arrow" d="M628 263C656 263 662 246 686 246"/>
+  <path class="arrow" d="M783 180V202"/>
+</svg>

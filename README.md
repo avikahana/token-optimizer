@@ -172,29 +172,9 @@ token-optimizer summarize README.md SECURITY.md
 
 <h2 align="center">How It Works</h2>
 
-```mermaid
-flowchart LR
-    A["Project files"] --> B["doctor / audit"]
-    A --> C["outline <file>"]
-    A --> D["summarize <files...>"]
-    B --> E["Static findings"]
-    C --> F["Structure map"]
-    D --> G["Continuation summary"]
-    E --> H["Optional dashboard"]
-    F --> I["Smaller rereads"]
-    G --> I
-    H --> I
-    I --> J["Cleaner next AI session"]
-
-    classDef input fill:#DBEAFE,stroke:#2563EB,color:#0F172A
-    classDef inspect fill:#DCFCE7,stroke:#16A34A,color:#052E16
-    classDef output fill:#FEF3C7,stroke:#D97706,color:#451A03
-    classDef final fill:#F3E8FF,stroke:#7C3AED,color:#2E1065
-    class A input
-    class B,C,D inspect
-    class E,F,G,H output
-    class I,J final
-```
+<p align="center">
+  <img src="./assets/workflow-overview.svg" alt="Token Optimizer workflow overview" width="920">
+</p>
 
 <table align="center">
   <tbody>
@@ -219,13 +199,9 @@ flowchart LR
 > tokens, billing usage, live Codex context-window usage, or a universal savings
 > claim.
 
-```mermaid
-xychart-beta
-    title "Common Python CLI Fixture"
-    x-axis ["Baseline", "Optimized"]
-    y-axis "static_estimate" 0 --> 500
-    bar [435, 202]
-```
+<p align="center">
+  <img src="./assets/benchmark-snapshot.svg" alt="Common Python CLI fixture benchmark chart" width="780">
+</p>
 
 <table align="center">
   <tbody>
@@ -335,18 +311,9 @@ xychart-beta
   printed to stdout and are not persisted by Token Optimizer.
 </p>
 
-```mermaid
-flowchart TB
-    S["static_estimate"] -->|offline| L["local bytes / 4 estimate"]
-    O["openai_tiktoken"] -->|offline| T["local tokenizer estimate"]
-    U["openai_usage"] -->|explicit network| R["Responses API with store=false"]
-    A["anthropic_count"] -->|explicit network| C["Anthropic count-tokens"]
-
-    classDef local fill:#DCFCE7,stroke:#16A34A,color:#052E16
-    classDef network fill:#FFE4E6,stroke:#E11D48,color:#4C0519
-    class S,L,O,T local
-    class U,R,A,C network
-```
+<p align="center">
+  <img src="./assets/provider-modes.svg" alt="Token Optimizer provider benchmark modes" width="920">
+</p>
 
 <h2 align="center">Pros And Tradeoffs</h2>
 

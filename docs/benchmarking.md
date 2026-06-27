@@ -82,7 +82,8 @@ Preservation checks: all pass
 
 ### Provider Layer: OpenAI Benchmark
 
-Required later because Avi uses OpenAI/Codex.
+Implemented for explicit OpenAI tokenizer estimates and live provider-usage
+measurements.
 
 Current OpenAI work has an adapter contract, an optional `tiktoken` CLI path,
 and an explicit live Responses API usage path:
@@ -115,7 +116,7 @@ The provider-neutral `benchmark --fixture` command remains offline.
 
 ### Provider Layer: Anthropic Benchmark
 
-Required later because Avi uses Anthropic.
+Implemented for explicit live Anthropic count-token measurements.
 
 Possible measurement labels:
 

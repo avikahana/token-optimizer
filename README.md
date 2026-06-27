@@ -17,7 +17,7 @@ persisting sensitive session data by default.
 - Clean uninstall that removes every file and hook it created.
 - Small, inspectable components over a giant all-in-one script.
 
-## Planned Commands
+## Current Commands
 
 - `token-optimizer audit`: inspect repo/context overhead and suggest fixes.
 - `token-optimizer audit --json`: print the audit report as stable JSON.

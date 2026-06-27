@@ -1,32 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
-  <rect width="1280" height="720" fill="#f7f7f4"/>
-  <text x="72" y="92" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" fill="#191a1d">Token Optimizer Audit Dashboard</text>
-  <text x="72" y="132" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#5e6470">Static dashboard generated from audit JSON</text>
-  <text x="1060" y="100" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700" fill="#2563eb">86/100</text>
-  <rect x="72" y="172" width="330" height="116" rx="8" fill="#ffffff" stroke="#d8d9d2"/>
-  <rect x="424" y="172" width="330" height="116" rx="8" fill="#ffffff" stroke="#d8d9d2"/>
-  <rect x="776" y="172" width="330" height="116" rx="8" fill="#ffffff" stroke="#d8d9d2"/>
-  <text x="100" y="232" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#191a1d">142</text>
-  <text x="100" y="260" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#5e6470">scanned files</text>
-  <text x="452" y="232" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#191a1d">8</text>
-  <text x="452" y="260" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#5e6470">context signals</text>
-  <text x="804" y="232" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#191a1d">5</text>
-  <text x="804" y="260" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#5e6470">outline candidates</text>
-  <rect x="72" y="336" width="1136" height="280" rx="8" fill="#ffffff" stroke="#d8d9d2"/>
-  <rect x="72" y="336" width="1136" height="48" rx="8" fill="#ecefea"/>
-  <text x="100" y="367" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#2f343b">Severity</text>
-  <text x="260" y="367" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#2f343b">Path</text>
-  <text x="520" y="367" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#2f343b">Message</text>
-  <line x1="72" y1="432" x2="1208" y2="432" stroke="#d8d9d2"/>
-  <line x1="72" y1="488" x2="1208" y2="488" stroke="#d8d9d2"/>
-  <line x1="72" y1="544" x2="1208" y2="544" stroke="#d8d9d2"/>
-  <text x="100" y="416" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#a64f03">warning</text>
-  <text x="260" y="416" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">docs/large.md</text>
-  <text x="520" y="416" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">large Markdown/docs file</text>
-  <text x="100" y="472" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#25636b">info</text>
-  <text x="260" y="472" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">.codex</text>
-  <text x="520" y="472" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">project-local Codex configuration directory present</text>
-  <text x="100" y="528" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#25636b">info</text>
-  <text x="260" y="528" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">skills</text>
-  <text x="520" y="528" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">skill inventory is compact</text>
+  <rect width="1280" height="720" fill="#0b1020"/>
+  <g opacity="0.45" stroke="#0f172a" stroke-width="1">
+    <path d="M0 64H1280M0 128H1280M0 192H1280M0 256H1280M0 320H1280M0 384H1280M0 448H1280M0 512H1280M0 576H1280M0 640H1280"/>
+    <path d="M80 0V720M160 0V720M240 0V720M320 0V720M400 0V720M480 0V720M560 0V720M640 0V720M720 0V720M800 0V720M880 0V720M960 0V720M1040 0V720M1120 0V720M1200 0V720"/>
+  </g>
+  <rect x="40" y="36" width="1200" height="648" rx="28" fill="#101827" stroke="#2c3a52"/>
+  <line x1="40" y1="124" x2="1240" y2="124" stroke="#2c3a52"/>
+  <rect x="72" y="63" width="48" height="48" rx="10" fill="#2f6df6"/>
+  <rect x="82" y="75" width="28" height="5" fill="#fff"/><rect x="82" y="86" width="21" height="5" fill="#fff"/><rect x="82" y="97" width="25" height="5" fill="#fff"/>
+  <path d="M107 86l15 10-15 10v-6H94v-8h13z" fill="#ffdc38"/>
+  <text x="140" y="88" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#f8fafc">Token Optimizer</text>
+  <text x="140" y="111" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#a8b3c7">Local-first context hygiene dashboard</text>
+  <rect x="702" y="75" width="190" height="34" rx="12" fill="#1f2a44" stroke="#3b4960"/><text x="716" y="98" font-family="Menlo, SFMono-Regular, monospace" font-size="16" fill="#dbe7ff">audit --project .</text>
+  <rect x="902" y="75" width="126" height="34" rx="12" fill="#143b47" stroke="#3b4960"/><text x="916" y="98" font-family="Menlo, SFMono-Regular, monospace" font-size="16" fill="#dbe7ff">no network</text>
+  <rect x="1038" y="75" width="96" height="34" rx="12" fill="#3b2d13" stroke="#3b4960"/><text x="1052" y="98" font-family="Menlo, SFMono-Regular, monospace" font-size="16" fill="#dbe7ff">dry-run</text>
+  <rect x="72" y="154" width="1136" height="84" rx="18" fill="#0d1424" stroke="#2c3a52"/>
+  <text x="100" y="193" font-family="Menlo, SFMono-Regular, monospace" font-size="22" fill="#22d3ee">$ token-optimizer audit --project . --json</text>
+  <text x="100" y="216" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#a8b3c7">Read-only scan. Explicit project path. No transcript or tool-output capture.</text>
+  <rect x="1056" y="180" width="116" height="32" rx="16" fill="#13351f" stroke="#276749"/><text x="1114" y="202" text-anchor="middle" font-family="Menlo, SFMono-Regular, monospace" font-size="18" fill="#34d399">PASS</text>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <rect x="72" y="266" width="350" height="132" rx="18" fill="#172033" stroke="#2c3a52"/><text x="166" y="312" font-size="18" fill="#a8b3c7">Context score</text><text x="166" y="348" font-size="34" font-weight="700" fill="#f8fafc">86 / 100</text><text x="96" y="371" font-size="16" fill="#a8b3c7">Signals are visible before you hand off.</text>
+    <rect x="466" y="266" width="350" height="132" rx="18" fill="#172033" stroke="#2c3a52"/><text x="560" y="312" font-size="18" fill="#a8b3c7">Signals</text><text x="560" y="348" font-size="34" font-weight="700" fill="#f8fafc">8 found</text><text x="490" y="371" font-size="16" fill="#a8b3c7">Large docs, noisy outputs, and local config.</text>
+    <rect x="858" y="266" width="350" height="132" rx="18" fill="#172033" stroke="#2c3a52"/><text x="952" y="312" font-size="18" fill="#a8b3c7">Candidates</text><text x="952" y="348" font-size="34" font-weight="700" fill="#f8fafc">5 outlines</text><text x="882" y="371" font-size="16" fill="#a8b3c7">Start with structure maps, then summarize.</text>
+  </g>
+  <rect x="72" y="430" width="726" height="210" rx="18" fill="#0d1424" stroke="#2c3a52"/>
+  <text x="100" y="466" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#f8fafc">Audit Findings</text>
+  <text x="100" y="494" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#a8b3c7">Readable, local, and action-oriented.</text>
+  <text x="100" y="532" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#a8b3c7">Severity</text><text x="238" y="532" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#a8b3c7">Path</text><text x="482" y="532" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#a8b3c7">Signal</text>
+  <line x1="100" y1="546" x2="770" y2="546" stroke="#3a4a64"/>
+  <text x="112" y="574" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#fb923c">warning</text><text x="238" y="574" font-family="Menlo, SFMono-Regular, monospace" font-size="16" fill="#dbe7ff">docs/large.md</text><text x="482" y="574" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#f8fafc">large Markdown file</text>
+  <text x="112" y="616" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#22d3ee">info</text><text x="238" y="616" font-family="Menlo, SFMono-Regular, monospace" font-size="16" fill="#dbe7ff">.codex/</text><text x="482" y="616" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#f8fafc">project-local config present</text>
+  <rect x="828" y="430" width="380" height="210" rx="18" fill="#0d1424" stroke="#2c3a52"/>
+  <text x="856" y="466" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#f8fafc">Handoff Loop</text>
+  <text x="856" y="508" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#f8fafc">1 Inspect</text><text x="904" y="530" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#a8b3c7">doctor / audit</text>
+  <text x="856" y="544" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#f8fafc">2 Shape</text><text x="904" y="566" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#a8b3c7">outline / summarize</text>
+  <text x="856" y="580" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#f8fafc">3 Verify</text><text x="904" y="602" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#a8b3c7">benchmark fixture</text>
+  <text x="856" y="616" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#f8fafc">4 Write only when asked</text><text x="904" y="638" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#a8b3c7">--yes</text>
 </svg>

@@ -146,7 +146,7 @@
 </table>
 
 <p align="center">
-  <img src="./assets/screenshot-dashboard.png" alt="Static audit dashboard screenshot" width="860">
+  <img src="./assets/screenshot-dashboard.png" alt="Token Optimizer audit dashboard preview" width="920">
 </p>
 
 <h2 align="center">Quick Start</h2>

@@ -142,6 +142,11 @@
       <td><code>token-optimizer hooks install --project . --dry-run</code></td>
       <td>Advanced experimental Stop-hook plan</td>
     </tr>
+    <tr>
+      <td>Visual hook toggle</td>
+      <td>Token Optimizer plugin hook control</td>
+      <td>Native on/off approval form for the inactive experimental Stop hook</td>
+    </tr>
   </tbody>
 </table>
 
@@ -255,7 +260,7 @@ token-optimizer summarize README.md SECURITY.md
     <tr><td>Command output is drowning useful facts</td><td><code>audit</code> flags noisy artifacts before they become handoff clutter</td></tr>
     <tr><td>You want a dashboard without a service</td><td><code>dashboard --dry-run</code> and <code>--yes</code> produce static HTML only, with Expert mode for raw audit JSON</td></tr>
     <tr><td>You need benchmark discipline</td><td><code>benchmark --fixture</code> separates static estimates from provider-specific counts</td></tr>
-    <tr><td>You are considering hooks</td><td><code>hooks install --dry-run</code> shows the exact managed block before any write</td></tr>
+    <tr><td>You are considering hooks</td><td><code>hooks install --dry-run</code> or the plugin visual toggle shows the exact managed block before any write</td></tr>
   </tbody>
 </table>
 
@@ -272,7 +277,7 @@ token-optimizer summarize README.md SECURITY.md
   <tbody>
     <tr><td>Network</td><td>No default network calls</td><td>Live provider benchmarks only when explicitly invoked</td></tr>
     <tr><td>Persistence</td><td>No raw transcripts, raw file contents, or raw tool output</td><td>Project-local config/data with <code>--yes</code></td></tr>
-    <tr><td>Hooks</td><td>No hook installed by plugin installation</td><td>Advanced experimental Stop hook requires dry-run review and <code>--yes --experimental</code></td></tr>
+    <tr><td>Hooks</td><td>No hook installed by plugin installation</td><td>Advanced experimental Stop hook requires dry-run review plus <code>--yes --experimental</code> or explicit visual toggle approval</td></tr>
     <tr><td>Dashboard</td><td>No server or watcher</td><td>Static HTML file under <code>.codex/token-optimizer/</code></td></tr>
     <tr><td>Cleanup</td><td>No implicit deletes</td><td><code>purge --dry-run</code>, then <code>purge --yes</code></td></tr>
   </tbody>
@@ -365,6 +370,7 @@ token-optimizer summarize README.md SECURITY.md
     <tr><td><code>purge --project . --yes</code></td><td>write</td><td>Removes Token Optimizer-owned state</td></tr>
     <tr><td><code>hooks install --project . --dry-run</code></td><td>read</td><td>Advanced experimental hook plan</td></tr>
     <tr><td><code>hooks install --project . --yes --experimental</code></td><td>write</td><td>Installs inactive placeholder Stop hook</td></tr>
+    <tr><td>Plugin visual hook toggle</td><td>write, after approval</td><td>Installs or removes only the inactive Token Optimizer Stop hook block</td></tr>
     <tr><td><code>hooks uninstall --project . --yes</code></td><td>write</td><td>Removes managed hook state</td></tr>
   </tbody>
 </table>
@@ -374,9 +380,10 @@ token-optimizer summarize README.md SECURITY.md
 <h2 align="center">Plugin Package</h2>
 
 <p align="center">
-  The Codex plugin skeleton lives in <code>.codex-plugin/plugin.json</code> with
-  a safe usage skill under <code>skills/token-optimizer/</code>. It intentionally
-  has no hooks, MCP server, app, daemon, or background behavior.
+  The Codex plugin lives in <code>.codex-plugin/plugin.json</code> with a safe
+  usage skill under <code>skills/token-optimizer/</code> and a local MCP
+  hook-control server. It does not install hooks by default, and it has no app,
+  daemon, networked service, or background behavior.
 </p>
 
 <table align="center">
@@ -387,8 +394,9 @@ token-optimizer summarize README.md SECURITY.md
     </tr>
   </thead>
   <tbody>
-    <tr><td><code>.codex-plugin/</code></td><td>hooks</td></tr>
-    <tr><td><code>skills/</code></td><td>MCP servers</td></tr>
+    <tr><td><code>.codex-plugin/</code></td><td>plugin-bundled hooks</td></tr>
+    <tr><td><code>.mcp.json</code>, <code>mcp/</code></td><td>apps</td></tr>
+    <tr><td><code>skills/</code></td><td>networked control surfaces</td></tr>
     <tr><td><code>assets/</code></td><td>apps</td></tr>
     <tr><td></td><td>scripts, daemons, services</td></tr>
   </tbody>
@@ -418,7 +426,7 @@ PYTHONPATH=/private/tmp/token-optimizer-validator-pyyaml python3 /path/to/valida
   <tbody>
     <tr><td>Wheel</td><td>Installable package, metadata, entry points, license</td></tr>
     <tr><td>Source distribution</td><td>Source, tests, benchmark fixtures, release scripts, public docs</td></tr>
-    <tr><td>Plugin package</td><td><code>.codex-plugin/</code>, <code>skills/</code>, <code>assets/</code> only</td></tr>
+    <tr><td>Plugin package</td><td><code>.codex-plugin/</code>, <code>.mcp.json</code>, <code>mcp/</code>, <code>skills/</code>, <code>assets/</code> only</td></tr>
   </tbody>
 </table>
 

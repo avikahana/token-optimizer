@@ -18,9 +18,11 @@ By default, Token Optimizer does not:
 - persist raw tool outputs
 - read API keys from command-line flags
 
-The inert Codex plugin skeleton currently exposes safe usage guidance only. It
-does not install hooks, MCP servers, apps, daemons, or background behavior by
-itself.
+The Codex plugin does not install hooks by default. It includes a local MCP
+hook-control server that can open a visual on/off approval form for the inactive
+experimental Stop hook. The control shows the dry-run plan first, requires
+explicit approval, and writes only project-local Token Optimizer hook config.
+It does not add apps, daemons, network calls, telemetry, or background behavior.
 
 ## Local Files
 
@@ -32,7 +34,8 @@ save that output.
 The current implemented mutating paths are:
 
 - `.codex/hooks.json` managed block, created only by
-  `token-optimizer hooks install --project . --yes`
+  `token-optimizer hooks install --project . --yes --experimental` or by
+  approving the plugin visual hook toggle
 - `.codex/token-optimizer.json`, created or updated only by
   `token-optimizer config init --project . --yes`
 - `.codex/token-optimizer/`, created only by explicit config, dashboard, or
@@ -44,6 +47,7 @@ These project-local artifacts are removed by:
 
 - `token-optimizer hooks uninstall --project . --yes`
 - `token-optimizer purge --project . --yes`
+- approving the plugin visual hook toggle in the off position
 
 All persistent paths are documented in `docs/persistence-map.md`.
 

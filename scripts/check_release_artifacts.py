@@ -37,6 +37,8 @@ WHEEL_ALLOWED_FILES = {
 
 PLUGIN_ALLOWED_PREFIXES = (
     ".codex-plugin/",
+    ".mcp.json",
+    "mcp/",
     "skills/",
     "assets/",
 )
@@ -44,7 +46,6 @@ PLUGIN_ALLOWED_PREFIXES = (
 PLUGIN_FORBIDDEN_PREFIXES = (
     "hooks/",
     "commands/",
-    "mcp/",
     "mcpServers/",
     "apps/",
     "scripts/",
@@ -224,6 +225,8 @@ def check_plugin_package(project: Path) -> None:
 
     required = {
         ".codex-plugin/plugin.json",
+        ".mcp.json",
+        "mcp/server.mjs",
         "skills/token-optimizer/SKILL.md",
         "assets/icon.png",
         "assets/logo.png",

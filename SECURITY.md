@@ -10,11 +10,14 @@ tool output, or make network requests.
 - `doctor`, `audit`, `outline`, `summarize`, `handoff`, dashboard dry-runs,
   config dry-runs, purge dry-runs, hook dry-runs, and provider-neutral benchmark
   runs are local-only.
-- Mutating commands require an explicit `--yes` flag, and hook installation also
-  requires `--experimental`.
-- The Codex plugin package is intentionally inert: it ships a manifest, a safe
-  usage skill, and presentation assets only. It does not ship hooks, MCP
-  servers, apps, commands, scripts, daemons, services, or background processes.
+- Mutating CLI commands require an explicit `--yes` flag, and hook installation
+  also requires `--experimental`.
+- The Codex plugin package does not install hooks by default. It ships a local
+  MCP hook-control server that can open a visual on/off approval form for the
+  inactive experimental Stop hook. The form shows the dry-run plan and writes
+  only after explicit approval.
+- The Codex plugin package does not ship global hooks, apps, daemons, services,
+  background processes, or networked control surfaces.
 - Managed project state is constrained to `.codex/token-optimizer.json`,
   `.codex/token-optimizer/`, and managed Token Optimizer hook blocks.
 
@@ -41,8 +44,8 @@ The release surface is checked so public artifacts exclude private/internal
 project records. The Python wheel should contain only the installable package,
 distribution metadata, entry point metadata, and license. The source
 distribution should contain source, tests, package metadata, and public docs. The
-Codex plugin package should remain minimal: `.codex-plugin/`, `skills/`, and
-`assets/` only.
+Codex plugin package should remain focused: `.codex-plugin/`, `.mcp.json`,
+`mcp/`, `skills/`, and `assets/` only.
 
 Run this before tagging or publishing:
 

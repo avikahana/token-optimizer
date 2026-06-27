@@ -17,6 +17,7 @@
     "tokens"
   ],
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Token Optimizer",
     "shortDescription": "Inspect context and generate local audit reports.",
@@ -26,6 +27,7 @@
     "capabilities": [
       "Local",
       "Read-only",
+      "Interactive hook control",
       "Static report",
       "CLI"
     ],
@@ -33,9 +35,9 @@
     "privacyPolicyURL": "https://github.com/avikahana/token-optimizer/blob/main/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/avikahana/token-optimizer/blob/main/TERMS.md",
     "defaultPrompt": [
-      "Run Token Optimizer doctor for this project.",
-      "Generate a local Token Optimizer audit report for this project.",
-      "Summarize this work for a future session."
+      "Health check: run Token Optimizer doctor for this project.",
+      "Generate report: create a local Token Optimizer audit report for this project.",
+      "Advanced hook: open the visual experimental Stop hook toggle."
     ],
     "brandColor": "#2563EB",
     "composerIcon": "./assets/icon.png",

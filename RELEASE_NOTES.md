@@ -22,7 +22,7 @@ Implemented:
 - project-local config/data initialization
 - top-level purge for Token Optimizer-owned state
 - optional git-state summary support
-- inert Codex plugin skeleton with safe usage skill
+- Codex plugin with safe usage skill and local visual hook-control MCP server
 - marketplace icon, logo, dark logo, and screenshot assets
 
 Safety notes:

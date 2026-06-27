@@ -39,6 +39,25 @@ class DashboardTests(unittest.TestCase):
         self.assertIn("large Markdown/docs file", rendered)
         self.assertIn("large.md", rendered)
 
+    def test_dashboard_has_static_expert_mode_toggle_for_raw_json(self) -> None:
+        audit_json = json.dumps(
+            {
+                "project": "/tmp/project",
+                "score": 100,
+                "scannedFiles": 1,
+                "signals": [],
+                "outlineCandidates": [],
+            }
+        )
+
+        rendered = render_dashboard_html(audit_json)
+
+        self.assertIn('id="expert-mode"', rendered)
+        self.assertIn("Expert mode", rendered)
+        self.assertIn('class="expert-section" id="expert-audit-json"', rendered)
+        self.assertIn(".expert-toggle-input:not(:checked) ~ .expert-section", rendered)
+        self.assertNotIn("<script", rendered.lower())
+
     def test_dashboard_plan_is_read_only_until_applied(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)

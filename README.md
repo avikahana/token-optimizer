@@ -110,7 +110,7 @@
     <tr>
       <td>Generate dashboard</td>
       <td><code>token-optimizer dashboard --project . --dry-run</code></td>
-      <td>A plan for a static HTML audit dashboard</td>
+      <td>A plan for a static HTML audit dashboard with Expert mode for raw JSON</td>
     </tr>
     <tr>
       <td>Outline files</td>
@@ -253,7 +253,7 @@ token-optimizer summarize README.md SECURITY.md
   <tbody>
     <tr><td>A session keeps rereading setup files</td><td><code>outline</code> and <code>summarize</code> make the next read smaller and more deliberate</td></tr>
     <tr><td>Command output is drowning useful facts</td><td><code>audit</code> flags noisy artifacts before they become handoff clutter</td></tr>
-    <tr><td>You want a dashboard without a service</td><td><code>dashboard --dry-run</code> and <code>--yes</code> produce static HTML only</td></tr>
+    <tr><td>You want a dashboard without a service</td><td><code>dashboard --dry-run</code> and <code>--yes</code> produce static HTML only, with Expert mode for raw audit JSON</td></tr>
     <tr><td>You need benchmark discipline</td><td><code>benchmark --fixture</code> separates static estimates from provider-specific counts</td></tr>
     <tr><td>You are considering hooks</td><td><code>hooks install --dry-run</code> shows the exact managed block before any write</td></tr>
   </tbody>
@@ -352,7 +352,7 @@ token-optimizer summarize README.md SECURITY.md
     <tr><td><code>audit --project .</code></td><td>read</td><td>Static context-hygiene findings</td></tr>
     <tr><td><code>audit --project . --json</code></td><td>read</td><td>Stable JSON report</td></tr>
     <tr><td><code>dashboard --project . --dry-run</code></td><td>read</td><td>Shows planned dashboard path/content</td></tr>
-    <tr><td><code>dashboard --project . --yes</code></td><td>write</td><td>Writes static HTML under <code>.codex/token-optimizer/</code></td></tr>
+    <tr><td><code>dashboard --project . --yes</code></td><td>write</td><td>Writes static HTML under <code>.codex/token-optimizer/</code>; Expert mode reveals raw audit JSON</td></tr>
     <tr><td><code>outline &lt;file&gt;</code></td><td>read</td><td>Markdown and Python structure maps</td></tr>
     <tr><td><code>summarize &lt;files...&gt;</code></td><td>read</td><td>Explicit file summaries only</td></tr>
     <tr><td><code>handoff &lt;files...&gt;</code></td><td>read</td><td>Alias for <code>summarize</code></td></tr>

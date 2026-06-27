@@ -191,6 +191,62 @@ def render_dashboard_html(audit_json: str) -> str:
     }}
     .metric strong {{ display: block; font-size: 24px; }}
     .metric span {{ color: var(--muted); }}
+    .expert-toggle-input {{
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }}
+    .expert-toggle {{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      color: var(--muted);
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }}
+    .expert-toggle-track {{
+      inline-size: 42px;
+      block-size: 24px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #dfe3dc;
+      position: relative;
+      transition: background 120ms ease, border-color 120ms ease;
+    }}
+    .expert-toggle-track::after {{
+      content: "";
+      position: absolute;
+      inline-size: 18px;
+      block-size: 18px;
+      border-radius: 50%;
+      inset-block-start: 2px;
+      inset-inline-start: 2px;
+      background: var(--panel);
+      border: 1px solid rgba(25, 26, 29, 0.12);
+      transition: transform 120ms ease;
+    }}
+    .expert-toggle-input:focus-visible + .expert-toggle .expert-toggle-track {{
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }}
+    .expert-toggle-input:checked + .expert-toggle {{
+      color: var(--ink);
+    }}
+    .expert-toggle-input:checked + .expert-toggle .expert-toggle-track {{
+      background: var(--accent);
+      border-color: var(--accent);
+    }}
+    .expert-toggle-input:checked + .expert-toggle .expert-toggle-track::after {{
+      transform: translateX(18px);
+    }}
+    .expert-toggle-input:not(:checked) ~ .expert-section {{
+      display: none;
+    }}
     table {{
       width: 100%;
       border-collapse: collapse;
@@ -247,6 +303,11 @@ def render_dashboard_html(audit_json: str) -> str:
       </div>
       <div class="score">{html.escape(str(payload.get("score", 0)))}/100</div>
     </header>
+    <input class="expert-toggle-input" type="checkbox" id="expert-mode" aria-controls="expert-audit-json">
+    <label class="expert-toggle" for="expert-mode">
+      <span class="expert-toggle-track" aria-hidden="true"></span>
+      <span>Expert mode</span>
+    </label>
     <section class="grid" aria-label="Audit metrics">
       <div class="metric"><strong>{html.escape(str(payload.get("scannedFiles", 0)))}</strong><span>scanned files</span></div>
       <div class="metric"><strong>{html.escape(str(len(signals)))}</strong><span>signals</span></div>
@@ -263,8 +324,10 @@ def render_dashboard_html(audit_json: str) -> str:
     <ul>
 {candidate_items}
     </ul>
-    <h2>Audit JSON</h2>
-    <pre>{escaped_payload}</pre>
+    <section class="expert-section" id="expert-audit-json">
+      <h2>Audit JSON</h2>
+      <pre>{escaped_payload}</pre>
+    </section>
   </main>
 </body>
 </html>

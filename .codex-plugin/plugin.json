@@ -19,13 +19,14 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Token Optimizer",
-    "shortDescription": "Inspect and reduce AI coding-session context waste.",
-    "longDescription": "Token Optimizer is a local-first context hygiene tool for AI coding sessions. It starts with explicit, read-only inspection workflows and avoids background daemons, network calls, broad hooks, and raw transcript or tool-output capture by default.",
+    "shortDescription": "Inspect context and generate local audit reports.",
+    "longDescription": "Token Optimizer is a local-first context hygiene tool for AI coding sessions. It starts with explicit, read-only inspection workflows and avoids background daemons, network calls, broad hooks, and raw transcript or tool-output capture by default. Audit reports are generated as local HTML files under .codex/token-optimizer/. Expert mode is available inside the generated report and reveals the raw audit JSON.",
     "developerName": "Avi Kahana",
     "category": "Productivity",
     "capabilities": [
       "Local",
       "Read-only",
+      "Static report",
       "CLI"
     ],
     "websiteURL": "https://github.com/avikahana/token-optimizer",
@@ -33,7 +34,7 @@
     "termsOfServiceURL": "https://github.com/avikahana/token-optimizer/blob/main/TERMS.md",
     "defaultPrompt": [
       "Run Token Optimizer doctor for this project.",
-      "Audit this repo for context hygiene issues.",
+      "Generate a local Token Optimizer audit report for this project.",
       "Summarize this work for a future session."
     ],
     "brandColor": "#2563EB",

@@ -1,0 +1,7 @@
+Command run: PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s tests
+
+test_summary_requires_explicit_inputs ... ok
+test_handoff_alias_still_works ... ok
+test_no_network_imports ... ok
+
+Important test output: test_summary_requires_explicit_inputs passed after explicit input handling.

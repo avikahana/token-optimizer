@@ -1,0 +1,33 @@
+Token Optimizer Hook Install Plan
+Project: <PROJECT>
+Hooks path: <PROJECT>/.codex/hooks.json
+Profile: quiet
+Dry run: yes
+Experimental: no
+
+Planned managed block:
+{
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "command": "token-optimizer summarize --hook stop --hook-mode inactive-placeholder-v1",
+          "timeout": 30,
+          "type": "command"
+        }
+      ],
+      "matcher": "*"
+    }
+  ],
+  "_tokenOptimizer": {
+    "behavior": "inactive-placeholder-v1",
+    "description": "Managed by Token Optimizer. Experimental inactive Stop hook; remove with uninstall.",
+    "feature": "experimental-stop-hook",
+    "marker": "TOKEN_OPTIMIZER_MANAGED",
+    "profile": "quiet",
+    "requiresFreshConsentForActiveBehavior": true
+  }
+}
+
+Warnings:
+- Stop hook installation is experimental and inactive in 0.1.0; use --experimental with --yes only after reviewing the dry-run plan.

@@ -1,0 +1,245 @@
+"""Provider-neutral static benchmark runner."""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+from token_optimizer.estimator import (
+    STATIC_ESTIMATOR_NAME,
+    STATIC_MEASUREMENT_LABEL,
+    estimate_static_tokens,
+)
+from token_optimizer.paths import reject_symlink
+
+
+class BenchmarkRunnerError(ValueError):
+    """Raised when a benchmark fixture cannot be measured safely."""
+
+
+@dataclass(frozen=True)
+class BenchmarkFileEstimate:
+    """Static estimate for one fixture file."""
+
+    path: str
+    byte_count: int
+    static_estimate: int
+
+
+@dataclass(frozen=True)
+class PreservationCheck:
+    """Whether an optimized fixture preserves one required fact."""
+
+    fact: str
+    present: bool
+
+
+@dataclass(frozen=True)
+class BenchmarkReport:
+    """Provider-neutral static benchmark report."""
+
+    fixture_path: Path
+    estimator: str
+    measurement_label: str
+    baseline_estimate: int
+    optimized_estimate: int
+    reduction: int
+    reduction_percent: float
+    preservation_checks: tuple[PreservationCheck, ...]
+    limitations: tuple[str, ...]
+    baseline_files: tuple[BenchmarkFileEstimate, ...]
+    optimized_files: tuple[BenchmarkFileEstimate, ...]
+
+
+DEFAULT_LIMITATIONS = (
+    "static_estimate is a provider-neutral approximation, not exact model tokens.",
+    "The runner measures checked-in fixture files, not live Codex context usage.",
+    "The runner does not call provider APIs, use network access, or estimate billing.",
+)
+
+
+def build_static_benchmark_report(fixture_path: str | Path) -> BenchmarkReport:
+    """Build a static benchmark report from one explicit fixture."""
+
+    fixture = _resolve_fixture(fixture_path)
+    baseline_dir = _required_directory(fixture / "baseline", "baseline")
+    optimized_dir = _required_directory(fixture / "optimized", "optimized")
+    must_preserve = _required_file(fixture / "must-preserve.md", "must-preserve")
+
+    baseline_files = _measure_files(fixture, baseline_dir)
+    optimized_files = _measure_files(fixture, optimized_dir)
+    baseline_estimate = sum(item.static_estimate for item in baseline_files)
+    optimized_estimate = sum(item.static_estimate for item in optimized_files)
+    reduction = baseline_estimate - optimized_estimate
+    reduction_percent = 0.0
+    if baseline_estimate:
+        reduction_percent = round((reduction / baseline_estimate) * 100, 2)
+
+    checks = _preservation_checks(must_preserve, optimized_dir)
+    return BenchmarkReport(
+        fixture_path=fixture,
+        estimator=STATIC_ESTIMATOR_NAME,
+        measurement_label=STATIC_MEASUREMENT_LABEL,
+        baseline_estimate=baseline_estimate,
+        optimized_estimate=optimized_estimate,
+        reduction=reduction,
+        reduction_percent=reduction_percent,
+        preservation_checks=checks,
+        limitations=DEFAULT_LIMITATIONS,
+        baseline_files=baseline_files,
+        optimized_files=optimized_files,
+    )
+
+
+def format_benchmark_report(report: BenchmarkReport) -> str:
+    """Render a static benchmark report for humans."""
+
+    lines = [
+        "Token Optimizer Benchmark",
+        f"Fixture: {report.fixture_path}",
+        f"Estimator: {report.estimator}",
+        f"Measurement label: {report.measurement_label}",
+        f"Baseline estimate: {report.baseline_estimate}",
+        f"Optimized estimate: {report.optimized_estimate}",
+        f"Reduction: {report.reduction}",
+        f"Reduction percent: {report.reduction_percent:.2f}%",
+        "",
+        "Preservation checks:",
+    ]
+    for check in report.preservation_checks:
+        status = "pass" if check.present else "fail"
+        lines.append(f"- [{status}] {check.fact}")
+    lines.extend(
+        [
+            "",
+            "Limitations:",
+            *[f"- {limitation}" for limitation in report.limitations],
+            "",
+            "Baseline files:",
+            *_format_file_estimates(report.baseline_files),
+            "",
+            "Optimized files:",
+            *_format_file_estimates(report.optimized_files),
+        ]
+    )
+    return "\n".join(lines)
+
+
+def benchmark_report_to_json(report: BenchmarkReport) -> str:
+    """Render a static benchmark report as stable JSON."""
+
+    payload: dict[str, Any] = {
+        "fixturePath": str(report.fixture_path),
+        "estimator": report.estimator,
+        "measurementLabel": report.measurement_label,
+        "baselineEstimate": report.baseline_estimate,
+        "optimizedEstimate": report.optimized_estimate,
+        "reduction": report.reduction,
+        "reductionPercent": report.reduction_percent,
+        "preservationChecks": [
+            {"fact": check.fact, "present": check.present}
+            for check in report.preservation_checks
+        ],
+        "limitations": list(report.limitations),
+        "baselineFiles": [_file_estimate_to_json(item) for item in report.baseline_files],
+        "optimizedFiles": [_file_estimate_to_json(item) for item in report.optimized_files],
+    }
+    return json.dumps(payload, indent=2, sort_keys=True)
+
+
+def _resolve_fixture(fixture_path: str | Path) -> Path:
+    raw_path = Path(fixture_path).expanduser()
+    reject_symlink(raw_path, "benchmark fixture")
+    fixture = raw_path.resolve(strict=False)
+    if not fixture.exists():
+        raise BenchmarkRunnerError(f"fixture does not exist: {fixture}")
+    if not fixture.is_dir():
+        raise BenchmarkRunnerError(f"fixture is not a directory: {fixture}")
+    return fixture
+
+
+def _required_directory(path: Path, label: str) -> Path:
+    reject_symlink(path, label)
+    if not path.exists():
+        raise BenchmarkRunnerError(f"{label} directory does not exist: {path}")
+    if not path.is_dir():
+        raise BenchmarkRunnerError(f"{label} path is not a directory: {path}")
+    return path
+
+
+def _required_file(path: Path, label: str) -> Path:
+    reject_symlink(path, label)
+    if not path.exists():
+        raise BenchmarkRunnerError(f"{label} file does not exist: {path}")
+    if not path.is_file():
+        raise BenchmarkRunnerError(f"{label} path is not a file: {path}")
+    return path
+
+
+def _measure_files(fixture: Path, directory: Path) -> tuple[BenchmarkFileEstimate, ...]:
+    estimates: list[BenchmarkFileEstimate] = []
+    for path in sorted(directory.rglob("*")):
+        if path.is_symlink():
+            raise BenchmarkRunnerError(f"fixture contains symlink: {path}")
+        if not path.is_file():
+            continue
+        byte_count = path.stat().st_size
+        estimates.append(
+            BenchmarkFileEstimate(
+                path=path.relative_to(fixture).as_posix(),
+                byte_count=byte_count,
+                static_estimate=estimate_static_tokens(byte_count),
+            )
+        )
+    if not estimates:
+        raise BenchmarkRunnerError(f"fixture side has no files: {directory}")
+    return tuple(estimates)
+
+
+def _preservation_checks(
+    must_preserve: Path,
+    optimized_dir: Path,
+) -> tuple[PreservationCheck, ...]:
+    optimized_text = _read_text_files(optimized_dir)
+    return tuple(
+        PreservationCheck(fact=fact, present=fact in optimized_text)
+        for fact in _must_preserve_facts(must_preserve)
+    )
+
+
+def _must_preserve_facts(path: Path) -> tuple[str, ...]:
+    facts: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("- "):
+            facts.append(stripped[2:])
+    if not facts:
+        raise BenchmarkRunnerError(f"must-preserve file has no facts: {path}")
+    return tuple(facts)
+
+
+def _read_text_files(directory: Path) -> str:
+    chunks: list[str] = []
+    for path in sorted(directory.rglob("*")):
+        if path.is_symlink():
+            raise BenchmarkRunnerError(f"fixture contains symlink: {path}")
+        if path.is_file():
+            chunks.append(path.read_text(encoding="utf-8"))
+    return "\n".join(chunks)
+
+
+def _format_file_estimates(files: tuple[BenchmarkFileEstimate, ...]) -> list[str]:
+    return [
+        f"- {item.path}: {item.byte_count} bytes, {item.static_estimate} static estimate"
+        for item in files
+    ]
+
+
+def _file_estimate_to_json(item: BenchmarkFileEstimate) -> dict[str, Any]:
+    return {
+        "path": item.path,
+        "bytes": item.byte_count,
+        "staticEstimate": item.static_estimate,
+    }

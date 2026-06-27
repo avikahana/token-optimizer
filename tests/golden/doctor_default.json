@@ -1,0 +1,27 @@
+{
+  "managedHooksPresent": false,
+  "managedMarker": "TOKEN_OPTIMIZER_MANAGED",
+  "paths": {
+    "config": {
+      "exists": false,
+      "label": "Config",
+      "path": "<PROJECT>/.codex/token-optimizer.json",
+      "symlink": false
+    },
+    "data": {
+      "exists": false,
+      "label": "Data",
+      "path": "<PROJECT>/.codex/token-optimizer",
+      "symlink": false
+    },
+    "hooks": {
+      "exists": false,
+      "label": "Hooks",
+      "path": "<PROJECT>/.codex/hooks.json",
+      "symlink": false
+    }
+  },
+  "project": "<PROJECT>",
+  "version": "0.1.0",
+  "warnings": []
+}

@@ -1,0 +1,9 @@
+Python Outline
+File: src/token_optimizer/cli.py
+
+1: function main
+
+Markdown Outline
+File: docs/security-model.md
+
+1: # Security Model

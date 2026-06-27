@@ -1,0 +1,47 @@
+{
+  "name": "token-optimizer",
+  "version": "0.1.0",
+  "description": "Local-first context hygiene tooling for AI coding sessions.",
+  "author": {
+    "name": "Avi Kahana",
+    "url": "https://github.com/avikahana"
+  },
+  "homepage": "https://github.com/avikahana/token-optimizer",
+  "repository": "https://github.com/avikahana/token-optimizer",
+  "license": "Apache-2.0",
+  "keywords": [
+    "context",
+    "codex",
+    "local-first",
+    "productivity",
+    "tokens"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Token Optimizer",
+    "shortDescription": "Inspect and reduce AI coding-session context waste.",
+    "longDescription": "Token Optimizer is a local-first context hygiene tool for AI coding sessions. It starts with explicit, read-only inspection workflows and avoids background daemons, network calls, broad hooks, and raw transcript or tool-output capture by default.",
+    "developerName": "Avi Kahana",
+    "category": "Productivity",
+    "capabilities": [
+      "Local",
+      "Read-only",
+      "CLI"
+    ],
+    "websiteURL": "https://github.com/avikahana/token-optimizer",
+    "privacyPolicyURL": "https://github.com/avikahana/token-optimizer/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/avikahana/token-optimizer/blob/main/TERMS.md",
+    "defaultPrompt": [
+      "Run Token Optimizer doctor for this project.",
+      "Audit this repo for context hygiene issues.",
+      "Summarize this work for a future session."
+    ],
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "logoDark": "./assets/logo-dark.png",
+    "screenshots": [
+      "./assets/screenshot-dashboard.png"
+    ]
+  }
+}

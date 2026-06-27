@@ -1,0 +1,5 @@
+Warning inspected:
+
+No failure remained after explicit input handling. Keep this file as the raw-ish
+warning/error side of the fixture so the benchmark contract can preserve
+important command-output context without private transcripts.

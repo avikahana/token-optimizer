@@ -1,0 +1,22 @@
+include README.md
+include LICENSE
+include PRIVACY.md
+include TERMS.md
+include RELEASE_NOTES.md
+include SECURITY.md
+include pyproject.toml
+include MANIFEST.in
+recursive-include docs *.md
+recursive-include tests *.py *.txt *.json
+recursive-include benchmarks *
+recursive-include scripts *.py
+prune brain
+prune chatgpt
+prune docs/research
+exclude AGENTS.md
+exclude CLAUDE.md
+exclude .env
+exclude .env.local
+global-exclude .DS_Store
+global-exclude __pycache__/*
+global-exclude *.py[cod]

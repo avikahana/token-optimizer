@@ -1,0 +1,12 @@
+Token Optimizer Doctor
+Version: 0.1.0
+Project: <PROJECT>
+
+Paths:
+- Config: <PROJECT>/.codex/token-optimizer.json (missing)
+- Data: <PROJECT>/.codex/token-optimizer (missing)
+- Hooks: <PROJECT>/.codex/hooks.json (missing)
+
+Managed hooks present: no
+
+Warnings: none

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#f7f7f4"/>
+  <text x="72" y="92" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" fill="#191a1d">Token Optimizer Audit Dashboard</text>
+  <text x="72" y="132" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#5e6470">Static dashboard generated from audit JSON</text>
+  <text x="1060" y="100" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700" fill="#2563eb">86/100</text>
+  <rect x="72" y="172" width="330" height="116" rx="8" fill="#ffffff" stroke="#d8d9d2"/>
+  <rect x="424" y="172" width="330" height="116" rx="8" fill="#ffffff" stroke="#d8d9d2"/>
+  <rect x="776" y="172" width="330" height="116" rx="8" fill="#ffffff" stroke="#d8d9d2"/>
+  <text x="100" y="232" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#191a1d">142</text>
+  <text x="100" y="260" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#5e6470">scanned files</text>
+  <text x="452" y="232" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#191a1d">8</text>
+  <text x="452" y="260" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#5e6470">context signals</text>
+  <text x="804" y="232" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#191a1d">5</text>
+  <text x="804" y="260" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#5e6470">outline candidates</text>
+  <rect x="72" y="336" width="1136" height="280" rx="8" fill="#ffffff" stroke="#d8d9d2"/>
+  <rect x="72" y="336" width="1136" height="48" rx="8" fill="#ecefea"/>
+  <text x="100" y="367" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#2f343b">Severity</text>
+  <text x="260" y="367" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#2f343b">Path</text>
+  <text x="520" y="367" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#2f343b">Message</text>
+  <line x1="72" y1="432" x2="1208" y2="432" stroke="#d8d9d2"/>
+  <line x1="72" y1="488" x2="1208" y2="488" stroke="#d8d9d2"/>
+  <line x1="72" y1="544" x2="1208" y2="544" stroke="#d8d9d2"/>
+  <text x="100" y="416" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#a64f03">warning</text>
+  <text x="260" y="416" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">docs/large.md</text>
+  <text x="520" y="416" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">large Markdown/docs file</text>
+  <text x="100" y="472" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#25636b">info</text>
+  <text x="260" y="472" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">.codex</text>
+  <text x="520" y="472" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">project-local Codex configuration directory present</text>
+  <text x="100" y="528" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#25636b">info</text>
+  <text x="260" y="528" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">skills</text>
+  <text x="520" y="528" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#191a1d">skill inventory is compact</text>
+</svg>

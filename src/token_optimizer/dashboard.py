@@ -68,6 +68,9 @@ def apply_dashboard_plan(plan: DashboardPlan) -> DashboardPlan:
     if plan.output_path.exists() and not plan.output_path.is_file():
         raise UnsafePathError(f"dashboard output path exists but is not a file: {plan.output_path}")
     plan.output_path.parent.mkdir(parents=True, exist_ok=True)
+    _ensure_owned_output(plan.project_path, plan.output_path)
+    if plan.output_path.exists() and not plan.output_path.is_file():
+        raise UnsafePathError(f"dashboard output path exists but is not a file: {plan.output_path}")
     plan.output_path.write_text(plan.after, encoding="utf-8")
     return plan
 

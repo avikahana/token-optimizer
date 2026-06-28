@@ -8,7 +8,8 @@ tool output, or make network requests.
 Project scans, mutating commands, and Token Optimizer-owned output paths are
 constrained to the selected project. Read-only explicit-input commands such as
 `outline` and `summarize` may read absolute local file paths outside the project
-when the user names those files directly.
+when the user names those files directly; those commands print a warning when an
+explicit input resolves outside the current or selected project root.
 
 ## Default Behavior
 

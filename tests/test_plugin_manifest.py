@@ -9,6 +9,9 @@ import tomllib
 import unittest
 from pathlib import Path
 
+from token_optimizer.doctor import MANAGED_MARKER
+from token_optimizer.hooks import INACTIVE_PLACEHOLDER_HOOK_MODE, MANAGED_COMMAND
+
 
 class PluginManifestTests(unittest.TestCase):
     REPOSITORY_URL = "https://github.com/avikahana/token-optimizer"
@@ -168,6 +171,7 @@ class PluginManifestTests(unittest.TestCase):
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 text=True,
+                cwd=project,
             )
             try:
                 self._send_mcp(process, {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
@@ -236,6 +240,16 @@ class PluginManifestTests(unittest.TestCase):
                 app_result = self._read_mcp(process)["result"]
                 self.assertEqual(app_result["_meta"]["ui"]["resourceUri"], "ui://token-optimizer/hook-control.html")
                 self.assertEqual(app_result["structuredContent"]["status"], "disabled")
+                managed_block = json.loads(app_result["structuredContent"]["installPlan"]["after"])
+                self.assertEqual(managed_block["_tokenOptimizer"]["marker"], MANAGED_MARKER)
+                self.assertEqual(
+                    managed_block["_tokenOptimizer"]["behavior"],
+                    INACTIVE_PLACEHOLDER_HOOK_MODE,
+                )
+                self.assertEqual(
+                    managed_block["Stop"][0]["hooks"][0]["command"],
+                    MANAGED_COMMAND,
+                )
                 install_digest = app_result["structuredContent"]["installPlan"]["planDigest"]
                 self.assertEqual(len(install_digest), 64)
 
@@ -465,6 +479,51 @@ class PluginManifestTests(unittest.TestCase):
                 result = self._read_mcp(process)
                 self.assertEqual(result["result"]["structuredContent"]["status"], "disabled")
                 self.assertFalse(hooks.exists())
+            finally:
+                if process.stdin is not None:
+                    process.stdin.close()
+                if process.stdout is not None:
+                    process.stdout.close()
+                process.kill()
+                process.wait(timeout=5)
+
+    def test_hook_toggle_mcp_server_rejects_project_outside_workspace(self) -> None:
+        node = os.environ.get("NODE_BINARY") or shutil.which("node")
+        if node is None:
+            self.skipTest("node is required to test the plugin MCP server")
+        root = Path(__file__).resolve().parents[1]
+        server_path = root / "mcp/server.mjs"
+        with tempfile.TemporaryDirectory() as directory:
+            temp_root = Path(directory)
+            workspace = temp_root / "workspace"
+            outside = temp_root / "outside"
+            workspace.mkdir()
+            outside.mkdir()
+            process = subprocess.Popen(
+                [node, str(server_path)],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                text=True,
+                cwd=workspace,
+            )
+            try:
+                self._send_mcp(process, {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
+                self._read_mcp(process)
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 2,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "token_optimizer_hook_status",
+                            "arguments": {"projectPath": str(outside)},
+                        },
+                    },
+                )
+                response = self._read_mcp(process)
+                self.assertEqual(response["error"]["code"], -32602)
+                self.assertIn("MCP workspace root", response["error"]["message"])
             finally:
                 if process.stdin is not None:
                     process.stdin.close()

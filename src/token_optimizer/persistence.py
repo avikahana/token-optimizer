@@ -107,6 +107,10 @@ def apply_config_init(plan: ConfigInitPlan) -> ConfigInitPlan:
         raise ValueError("data directory state changed since plan was created")
     config_path.parent.mkdir(parents=True, exist_ok=True)
     data_path.mkdir(parents=True, exist_ok=True)
+    config_path, data_path = _owned_config_paths(plan.project_path)
+    if plan.config_path != config_path or plan.data_path != data_path:
+        raise UnsafePathError("config/data paths do not match project-owned paths")
+    _validate_config_paths(config_path, data_path)
     config_path.write_text(plan.after, encoding="utf-8")
     return plan
 
@@ -201,11 +205,15 @@ def apply_purge(plan: PurgePlan) -> PurgePlan:
         apply_hook_file_change(plan.hooks_plan)
         completed_steps.append("hooks")
         if config_path.exists():
+            config_path, data_path = _owned_config_paths(plan.project_path)
+            _validate_config_paths(config_path, data_path)
             if not config_path.is_file():
                 raise UnsafePathError(f"config path exists but is not a file: {config_path}")
             config_path.unlink()
             completed_steps.append("config")
         if data_path.exists():
+            config_path, data_path = _owned_config_paths(plan.project_path)
+            _validate_config_paths(config_path, data_path)
             if not data_path.is_dir():
                 raise UnsafePathError(f"data path exists but is not a directory: {data_path}")
             shutil.rmtree(data_path)

@@ -6,7 +6,7 @@ import ast
 from dataclasses import dataclass
 from pathlib import Path
 
-from token_optimizer.paths import reject_symlink_components_for_path
+from token_optimizer.paths import reject_symlink_components_for_path, resolve_project_path
 
 
 class OutlineError(ValueError):
@@ -30,33 +30,37 @@ class OutlineReport:
     file_path: Path
     file_type: str
     items: tuple[OutlineItem, ...]
+    warnings: tuple[str, ...] = ()
 
 
 MARKDOWN_SUFFIXES = {".md", ".markdown"}
 PYTHON_SUFFIXES = {".py", ".pyw"}
 
 
-def build_outline(file_path: str | Path) -> OutlineReport:
+def build_outline(file_path: str | Path, *, project_path: str | Path | None = None) -> OutlineReport:
     """Build a compact outline for a Markdown or Python file."""
 
+    project = resolve_project_path(project_path)
     path = _resolve_input_file(file_path)
     suffix = path.suffix.lower()
-    text = path.read_text(encoding="utf-8")
+    warnings = _outside_project_warnings(path, project)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as error:
+        raise OutlineError(f"input file is not UTF-8: {path}") from error
     if suffix in MARKDOWN_SUFFIXES:
-        return OutlineReport(path, "Markdown", tuple(_outline_markdown(text)))
+        return OutlineReport(path, "Markdown", tuple(_outline_markdown(text)), warnings)
     if suffix in PYTHON_SUFFIXES:
-        return OutlineReport(path, "Python", tuple(_outline_python(text)))
+        return OutlineReport(path, "Python", tuple(_outline_python(text)), warnings)
     raise OutlineError(f"unsupported file type: {path.suffix or '<none>'}")
 
 
 def format_outline(report: OutlineReport) -> str:
     """Render an outline for human CLI output."""
 
-    lines = [
-        f"{report.file_type} Outline",
-        f"File: {report.file_path}",
-        "",
-    ]
+    lines = [f"{report.file_type} Outline", f"File: {report.file_path}"]
+    lines.extend(f"Warning: {warning}" for warning in report.warnings)
+    lines.append("")
     if not report.items:
         lines.append(f"No {report.file_type} structure found.")
         return "\n".join(lines)
@@ -75,6 +79,14 @@ def _resolve_input_file(file_path: str | Path) -> Path:
     if not path.is_file():
         raise OutlineError(f"path is not a file: {path}")
     return path
+
+
+def _outside_project_warnings(path: Path, project_path: Path) -> tuple[str, ...]:
+    try:
+        path.relative_to(project_path)
+    except ValueError:
+        return (f"input resolves outside project: {project_path}",)
+    return ()
 
 
 def _outline_markdown(text: str) -> list[OutlineItem]:

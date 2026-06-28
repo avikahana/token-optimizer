@@ -193,8 +193,16 @@ def apply_hook_file_change(plan: HookFileChangePlan) -> HookFileChangePlan:
         if hooks_path.exists() and not hooks_path.is_file():
             raise UnsafePathError(f"hooks path exists but is not a file: {hooks_path}")
         hooks_path.parent.mkdir(parents=True, exist_ok=True)
+        hooks_path = _owned_hooks_path(plan.project_path)
+        if plan.hooks_path != hooks_path:
+            raise UnsafePathError(f"hooks path does not match project-owned path: {plan.hooks_path}")
+        if hooks_path.exists() and not hooks_path.is_file():
+            raise UnsafePathError(f"hooks path exists but is not a file: {hooks_path}")
         hooks_path.write_text(plan.after, encoding="utf-8")
     elif plan.action == "remove":
+        hooks_path = _owned_hooks_path(plan.project_path)
+        if plan.hooks_path != hooks_path:
+            raise UnsafePathError(f"hooks path does not match project-owned path: {plan.hooks_path}")
         if hooks_path.exists():
             if not hooks_path.is_file():
                 raise UnsafePathError(f"hooks path exists but is not a file: {hooks_path}")

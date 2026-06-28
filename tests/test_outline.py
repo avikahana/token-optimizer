@@ -108,6 +108,33 @@ class OutlineSafetyTests(unittest.TestCase):
             with self.assertRaises(OutlineError):
                 build_outline(path)
 
+    def test_warns_when_explicit_input_resolves_outside_project(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            project = root / "project"
+            outside = root / "outside"
+            project.mkdir()
+            outside.mkdir()
+            path = outside / "notes.md"
+            path.write_text("# Outside\n", encoding="utf-8")
+
+            report = build_outline(path, project_path=project)
+            rendered = format_outline(report)
+
+            self.assertEqual(
+                report.warnings,
+                (f"input resolves outside project: {project}",),
+            )
+            self.assertIn(f"Warning: input resolves outside project: {project}", rendered)
+
+    def test_wraps_non_utf8_input_in_outline_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory).resolve() / "binary.md"
+            path.write_bytes(b"\xff\xfe")
+
+            with self.assertRaisesRegex(OutlineError, "input file is not UTF-8"):
+                build_outline(path, project_path=path.parent)
+
     def test_rejects_symlink_input(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

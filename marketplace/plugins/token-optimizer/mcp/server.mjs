@@ -17,6 +17,7 @@ const LEGACY_MANAGED_COMMAND = "token-optimizer summarize --hook stop";
 const HOOK_WARNING =
   "Stop-hook entry installation is experimental in 0.1.0 and invokes an intentionally no-op command; use hook control only after reviewing the dry-run plan.";
 const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url));
+const WORKSPACE_ROOT = fs.realpathSync(process.cwd());
 const WIDGET_URI = "ui://token-optimizer/hook-control.html";
 const WIDGET_MIME_TYPE = "text/html;profile=mcp-app";
 const REQUEST_TIMEOUT_MS = 30000;
@@ -76,13 +77,22 @@ function logProtocolWarning(message) {
 
 function requireProjectPath(value) {
   if (typeof value !== "string" || value.trim().length === 0) {
-    throw new Error("projectPath must be a non-empty absolute project path.");
+    throw new Error("projectPath must be a non-empty project path.");
   }
-  const project = path.resolve(value);
-  if (!fs.existsSync(project) || !fs.statSync(project).isDirectory()) {
-    throw new Error(`projectPath must be an existing directory: ${project}`);
+  const candidate = path.resolve(WORKSPACE_ROOT, value);
+  if (!fs.existsSync(candidate) || !fs.statSync(candidate).isDirectory()) {
+    throw new Error(`projectPath must be an existing directory: ${candidate}`);
+  }
+  const project = fs.realpathSync(candidate);
+  if (!isPathInside(WORKSPACE_ROOT, project)) {
+    throw new Error(`projectPath must stay inside the MCP workspace root: ${WORKSPACE_ROOT}`);
   }
   return project;
+}
+
+function isPathInside(parent, child) {
+  const relative = path.relative(parent, child);
+  return relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative));
 }
 
 function hooksPathFor(project) {
@@ -331,6 +341,10 @@ function isInstalled(project) {
 }
 
 function applyPlan(plan) {
+  const hooksPath = hooksPathFor(plan.project);
+  if (hooksPath !== plan.hooksPath) {
+    throw new Error("planned hooks path no longer matches the project-owned hooks path.");
+  }
   const before = readExistingHooks(plan.hooksPath);
   if (before !== plan.before) {
     throw new Error("hooks file changed since the hook-control plan was created.");
@@ -339,6 +353,7 @@ function applyPlan(plan) {
     return;
   }
   if (plan.action === "remove") {
+    hooksPathFor(plan.project);
     if (fs.existsSync(plan.hooksPath)) {
       fs.unlinkSync(plan.hooksPath);
     }
@@ -348,6 +363,7 @@ function applyPlan(plan) {
     throw new Error("planned hooks output is missing.");
   }
   fs.mkdirSync(path.dirname(plan.hooksPath), { recursive: true });
+  hooksPathFor(plan.project);
   fs.writeFileSync(plan.hooksPath, plan.after, "utf8");
 }
 

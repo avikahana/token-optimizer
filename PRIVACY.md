@@ -30,10 +30,11 @@ network calls, telemetry, or background behavior.
 Token Optimizer commands operate on explicit local inputs. Project scans,
 mutating commands, and owned output paths are project-local. Read-only
 explicit-input commands such as `outline` and `summarize` may read absolute file
-paths outside the project when the user names those files directly. Current
-commands such as `doctor`, `audit`, `outline`, `summarize`, and the default
-benchmark runner print reports to stdout unless the user chooses to redirect or
-save that output.
+paths outside the project when the user names those files directly. `outline`
+and `summarize` print a warning when an explicit input resolves outside the
+current or selected project root. Current commands such as `doctor`, `audit`,
+`outline`, `summarize`, and the default benchmark runner print reports to stdout
+unless the user chooses to redirect or save that output.
 
 The current implemented mutating paths are:
 

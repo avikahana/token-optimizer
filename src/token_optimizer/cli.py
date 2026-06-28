@@ -293,7 +293,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "outline":
         try:
-            print(format_outline(build_outline(args.file)))
+            print(format_outline(build_outline(args.file, project_path=".")))
         except (OutlineError, ValueError) as exc:
             print(f"outline: {exc}")
             return 1

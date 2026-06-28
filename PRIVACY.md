@@ -20,8 +20,7 @@ By default, Token Optimizer does not:
 
 The Codex plugin does not install hooks by default. It includes a local MCP
 hook-control server that can open an interactive MCP hook-control surface when
-the host supports MCP UI resources, with a native on/off approval form as the
-fallback.
+the host supports MCP UI resources, with a native approval form as the fallback.
 The controls show the dry-run plan first, require explicit approval, and write
 only project-local Token Optimizer hook config. They do not add daemons,
 network calls, telemetry, or background behavior.

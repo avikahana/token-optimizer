@@ -1,6 +1,6 @@
 # Release Notes
 
-## 0.1.0 - Marketplace Readiness Draft
+## 0.1.0 - Initial Release
 
 Initial local-first Token Optimizer baseline.
 

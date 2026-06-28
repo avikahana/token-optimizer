@@ -67,6 +67,18 @@ PLUGIN_FORBIDDEN_SUFFIXES = (
     ".plist",
 )
 
+PLUGIN_MIRRORED_FILES = (
+    ".codex-plugin/plugin.json",
+    ".mcp.json",
+    "mcp/server.mjs",
+    "mcp/hook-control-widget.html",
+    "skills/token-optimizer/SKILL.md",
+    "assets/icon.png",
+    "assets/logo.png",
+    "assets/logo-dark.png",
+    "assets/screenshot-dashboard.png",
+)
+
 SDIST_REQUIRED = {
     "README.md",
     "LICENSE",
@@ -223,20 +235,20 @@ def check_plugin_package(project: Path) -> None:
         joined = "\n  - ".join(details)
         raise SystemExit(f"plugin package contains forbidden or unexpected files:\n  - {joined}")
 
-    required = {
-        ".codex-plugin/plugin.json",
-        ".mcp.json",
-        "mcp/server.mjs",
-        "skills/token-optimizer/SKILL.md",
-        "assets/icon.png",
-        "assets/logo.png",
-        "assets/logo-dark.png",
-        "assets/screenshot-dashboard.png",
-    }
+    required = set(PLUGIN_MIRRORED_FILES)
     missing = sorted(name for name in required if name not in names)
     if missing:
         joined = "\n  - ".join(missing)
         raise SystemExit(f"plugin package is missing required files:\n  - {joined}")
+
+    mismatched = sorted(
+        name
+        for name in PLUGIN_MIRRORED_FILES
+        if (project / name).read_bytes() != (plugin_root / name).read_bytes()
+    )
+    if mismatched:
+        joined = "\n  - ".join(mismatched)
+        raise SystemExit(f"plugin package files drifted from root plugin files:\n  - {joined}")
 
 
 def parse_args() -> argparse.Namespace:

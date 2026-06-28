@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 
+from token_optimizer import __version__
 from token_optimizer.anthropic_benchmark import (
     anthropic_count_report_to_json,
     build_live_anthropic_count_report,
@@ -41,6 +42,7 @@ from token_optimizer.openai_benchmark import (
 )
 from token_optimizer.outline import OutlineError, build_outline, format_outline
 from token_optimizer.persistence import (
+    PurgeApplyError,
     apply_config_init,
     apply_purge,
     config_init_plan_to_json,
@@ -61,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--version",
         action="version",
-        version="token-optimizer 0.1.0",
+        version=f"token-optimizer {__version__}",
     )
     subcommands = parser.add_subparsers(dest="command")
 
@@ -198,7 +200,7 @@ def build_parser() -> argparse.ArgumentParser:
     hooks_install.add_argument(
         "--experimental",
         action="store_true",
-        help="Allow the inactive experimental Stop hook to be installed.",
+        help="Allow the experimental no-op Stop-hook entry to be installed.",
     )
     hooks_install.add_argument("--json", action="store_true", help="Render the plan as JSON.")
     hooks_uninstall = hooks_subcommands.add_parser("uninstall", help="Plan hook removal.")
@@ -319,7 +321,7 @@ def main(argv: list[str] | None = None) -> int:
             plan = plan_dashboard(args.project, output_path=args.output)
             if args.yes:
                 apply_dashboard_plan(plan)
-        except (AuditError, ValueError) as exc:
+        except (AuditError, OSError, ValueError) as exc:
             print(f"dashboard: {exc}")
             return 1
         print(
@@ -396,8 +398,8 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         if args.hooks_command == "install" and args.yes and not args.experimental:
             print(
-                "hooks install: Stop hook installation is experimental and inactive in 0.1.0; "
-                "review --dry-run first, then rerun with --yes --experimental to enable it"
+                "hooks install: Stop-hook entry installation is experimental and invokes a no-op command in 0.1.0; "
+                "review --dry-run first, then rerun with --yes --experimental to install the no-op entry"
             )
             return 1
         try:
@@ -410,7 +412,7 @@ def main(argv: list[str] | None = None) -> int:
                 plan = plan_hook_uninstall_file_change(args.project)
             if args.yes:
                 apply_hook_file_change(plan)
-        except ValueError as exc:
+        except (OSError, ValueError) as exc:
             print(f"hooks {args.hooks_command}: {exc}")
             return 1
         print(
@@ -432,7 +434,7 @@ def main(argv: list[str] | None = None) -> int:
             plan = plan_config_init(args.project)
             if args.yes:
                 apply_config_init(plan)
-        except ValueError as exc:
+        except (OSError, ValueError) as exc:
             print(f"config init: {exc}")
             return 1
         print(
@@ -452,7 +454,10 @@ def main(argv: list[str] | None = None) -> int:
             plan = plan_purge(args.project)
             if args.yes:
                 apply_purge(plan)
-        except ValueError as exc:
+        except PurgeApplyError as exc:
+            print(f"purge: {exc}")
+            return 1
+        except (OSError, ValueError) as exc:
             print(f"purge: {exc}")
             return 1
         print(

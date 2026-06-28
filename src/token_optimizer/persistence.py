@@ -21,6 +21,15 @@ from token_optimizer.paths import UnsafePathError, reject_symlink, resolve_owned
 DEFAULT_DASHBOARD_RELATIVE_PATH = DATA_RELATIVE_PATH / "audit-dashboard.html"
 
 
+class PurgeApplyError(OSError):
+    """Raised when purge fails after completing zero or more removal steps."""
+
+    def __init__(self, message: str, completed_steps: tuple[str, ...], original: OSError) -> None:
+        super().__init__(message)
+        self.completed_steps = completed_steps
+        self.original = original
+
+
 @dataclass(frozen=True)
 class ConfigInitPlan:
     """Planned project-local config/data initialization."""
@@ -187,15 +196,27 @@ def apply_purge(plan: PurgePlan) -> PurgePlan:
         raise ValueError("config file state changed since purge plan was created")
     if data_path.exists() != plan.would_remove_data_dir:
         raise ValueError("data directory state changed since purge plan was created")
-    apply_hook_file_change(plan.hooks_plan)
-    if config_path.exists():
-        if not config_path.is_file():
-            raise UnsafePathError(f"config path exists but is not a file: {config_path}")
-        config_path.unlink()
-    if data_path.exists():
-        if not data_path.is_dir():
-            raise UnsafePathError(f"data path exists but is not a directory: {data_path}")
-        shutil.rmtree(data_path)
+    completed_steps: list[str] = []
+    try:
+        apply_hook_file_change(plan.hooks_plan)
+        completed_steps.append("hooks")
+        if config_path.exists():
+            if not config_path.is_file():
+                raise UnsafePathError(f"config path exists but is not a file: {config_path}")
+            config_path.unlink()
+            completed_steps.append("config")
+        if data_path.exists():
+            if not data_path.is_dir():
+                raise UnsafePathError(f"data path exists but is not a directory: {data_path}")
+            shutil.rmtree(data_path)
+            completed_steps.append("data")
+    except OSError as exc:
+        completed = ", ".join(completed_steps) if completed_steps else "none"
+        raise PurgeApplyError(
+            f"{exc}; completed purge steps before failure: {completed}",
+            tuple(completed_steps),
+            exc,
+        ) from exc
     return plan
 
 

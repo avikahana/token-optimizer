@@ -10,8 +10,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from token_optimizer.benchmark_runner import BenchmarkRunnerError, PreservationCheck
-from token_optimizer.paths import reject_symlink
+from token_optimizer.benchmark_runner import (
+    BenchmarkRunnerError,
+    PreservationCheck,
+    fixture_side_text,
+    preservation_checks_for_fixture,
+    resolve_benchmark_fixture,
+)
 
 
 ANTHROPIC_PROVIDER = "anthropic"
@@ -198,69 +203,19 @@ def _payload(model: str, text: str) -> Mapping[str, Any]:
 
 
 def _resolve_fixture(fixture_path: str | Path) -> Path:
-    raw_path = Path(fixture_path).expanduser()
-    reject_symlink(raw_path, "Anthropic benchmark fixture")
-    fixture = raw_path.resolve(strict=False)
-    if not fixture.exists():
-        raise BenchmarkRunnerError(f"fixture does not exist: {fixture}")
-    if not fixture.is_dir():
-        raise BenchmarkRunnerError(f"fixture is not a directory: {fixture}")
-    _required_directory(fixture / "baseline", "baseline")
-    _required_directory(fixture / "optimized", "optimized")
-    _required_file(fixture / "must-preserve.md", "must-preserve")
-    return fixture
-
-
-def _fixture_side_text(fixture: Path, side: str) -> str:
-    directory = _required_directory(fixture / side, side)
-    chunks: list[str] = []
-    for path in sorted(directory.rglob("*")):
-        if path.is_symlink():
-            raise BenchmarkRunnerError(f"fixture contains symlink: {path}")
-        if not path.is_file():
-            continue
-        relative = path.relative_to(fixture).as_posix()
-        chunks.append(f"## {relative}\n\n{path.read_text(encoding='utf-8')}")
-    if not chunks:
-        raise BenchmarkRunnerError(f"fixture side has no files: {directory}")
-    return "\n\n".join(chunks)
-
-
-def _preservation_checks(fixture: Path) -> tuple[PreservationCheck, ...]:
-    optimized_text = _fixture_side_text(fixture, "optimized")
-    return tuple(
-        PreservationCheck(fact=fact, present=fact in optimized_text)
-        for fact in _must_preserve_facts(fixture / "must-preserve.md")
+    return resolve_benchmark_fixture(
+        fixture_path,
+        label="Anthropic benchmark fixture",
+        require_contract=True,
     )
 
 
-def _must_preserve_facts(path: Path) -> tuple[str, ...]:
-    facts: list[str] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped.startswith("- "):
-            facts.append(stripped[2:])
-    if not facts:
-        raise BenchmarkRunnerError(f"must-preserve file has no facts: {path}")
-    return tuple(facts)
+def _fixture_side_text(fixture: Path, side: str) -> str:
+    return fixture_side_text(fixture, side)
 
 
-def _required_directory(path: Path, label: str) -> Path:
-    reject_symlink(path, label)
-    if not path.exists():
-        raise BenchmarkRunnerError(f"{label} directory does not exist: {path}")
-    if not path.is_dir():
-        raise BenchmarkRunnerError(f"{label} path is not a directory: {path}")
-    return path
-
-
-def _required_file(path: Path, label: str) -> Path:
-    reject_symlink(path, label)
-    if not path.exists():
-        raise BenchmarkRunnerError(f"{label} file does not exist: {path}")
-    if not path.is_file():
-        raise BenchmarkRunnerError(f"{label} path is not a file: {path}")
-    return path
+def _preservation_checks(fixture: Path) -> tuple[PreservationCheck, ...]:
+    return preservation_checks_for_fixture(fixture)
 
 
 def _count_input_tokens(value: object) -> int:

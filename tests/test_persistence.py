@@ -4,9 +4,11 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from token_optimizer.hooks import merge_managed_block, render_hooks_json
 from token_optimizer.persistence import (
+    PurgeApplyError,
     apply_config_init,
     apply_purge,
     config_init_plan_to_json,
@@ -59,6 +61,17 @@ class PersistenceTests(unittest.TestCase):
 
             with self.assertRaises(UnsafePathError):
                 plan_config_init(project)
+
+    def test_config_init_rejects_symlinked_codex_parent_inside_project(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            user_owned = project / "user-owned"
+            user_owned.mkdir()
+            (project / ".codex").symlink_to(user_owned, target_is_directory=True)
+
+            with self.assertRaises(UnsafePathError):
+                plan_config_init(project)
+            self.assertFalse((user_owned / "token-optimizer.json").exists())
 
     def test_config_init_apply_rejects_symlinked_codex_parent(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -125,6 +138,19 @@ class PersistenceTests(unittest.TestCase):
             with self.assertRaises(UnsafePathError):
                 plan_purge(project)
 
+    def test_purge_plan_rejects_symlinked_codex_parent_inside_project(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            user_owned = project / "user-owned"
+            data = user_owned / "token-optimizer"
+            data.mkdir(parents=True)
+            (data / "keep.txt").write_text("do not delete", encoding="utf-8")
+            (project / ".codex").symlink_to(user_owned, target_is_directory=True)
+
+            with self.assertRaises(UnsafePathError):
+                plan_purge(project)
+            self.assertTrue((data / "keep.txt").exists())
+
     def test_purge_apply_rejects_symlinked_codex_parent(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -142,6 +168,24 @@ class PersistenceTests(unittest.TestCase):
             self.assertFalse((outside / "token-optimizer").exists())
             self.assertTrue((project / ".codex-real/token-optimizer.json").exists())
 
+    def test_purge_apply_rejects_symlinked_codex_parent_inside_project(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            apply_config_init(plan_config_init(project))
+            plan = plan_purge(project)
+            real_codex = project / ".codex-real"
+            user_owned = project / "user-owned"
+            user_data = user_owned / "token-optimizer"
+            (project / ".codex").rename(real_codex)
+            user_data.mkdir(parents=True)
+            (user_data / "keep.txt").write_text("do not delete", encoding="utf-8")
+            (project / ".codex").symlink_to(user_owned, target_is_directory=True)
+
+            with self.assertRaises(UnsafePathError):
+                apply_purge(plan)
+            self.assertTrue((user_data / "keep.txt").exists())
+            self.assertTrue((real_codex / "token-optimizer.json").exists())
+
     def test_purge_apply_rejects_stale_plan(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
@@ -151,6 +195,19 @@ class PersistenceTests(unittest.TestCase):
 
             with self.assertRaises(ValueError):
                 apply_purge(plan)
+
+    def test_purge_apply_reports_partial_steps_on_os_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            apply_config_init(plan_config_init(project))
+            plan = plan_purge(project)
+
+            with patch("token_optimizer.persistence.shutil.rmtree", side_effect=OSError("boom")):
+                with self.assertRaises(PurgeApplyError) as raised:
+                    apply_purge(plan)
+
+            self.assertEqual(raised.exception.completed_steps, ("hooks", "config"))
+            self.assertIn("completed purge steps before failure: hooks, config", str(raised.exception))
 
     def test_purge_json_plan_is_machine_readable(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -6,7 +6,7 @@ import ast
 from dataclasses import dataclass
 from pathlib import Path
 
-from token_optimizer.paths import reject_symlink
+from token_optimizer.paths import reject_symlink_components_for_path
 
 
 class OutlineError(ValueError):
@@ -68,7 +68,7 @@ def format_outline(report: OutlineReport) -> str:
 
 def _resolve_input_file(file_path: str | Path) -> Path:
     raw_path = Path(file_path).expanduser()
-    reject_symlink(raw_path, "outline input")
+    reject_symlink_components_for_path(raw_path, "outline input")
     path = raw_path.resolve(strict=False)
     if not path.exists():
         raise OutlineError(f"file does not exist: {path}")

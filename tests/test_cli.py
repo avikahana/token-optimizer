@@ -19,6 +19,16 @@ FIXTURE = (
 
 
 class CliTests(unittest.TestCase):
+    def test_version_uses_package_version(self) -> None:
+        output = io.StringIO()
+
+        with redirect_stdout(output):
+            with self.assertRaises(SystemExit) as raised:
+                main(["--version"])
+
+        self.assertEqual(raised.exception.code, 0)
+        self.assertEqual(output.getvalue().strip(), "token-optimizer 0.1.0")
+
     def test_summarize_accepts_hook_placeholder(self) -> None:
         output = io.StringIO()
 
@@ -58,7 +68,7 @@ class CliTests(unittest.TestCase):
 
     def test_outline_markdown_outputs_structure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text("# Title\n\n## Next\n", encoding="utf-8")
             output = io.StringIO()
 
@@ -71,7 +81,7 @@ class CliTests(unittest.TestCase):
 
     def test_outline_python_outputs_structure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "app.py"
+            path = Path(directory).resolve() / "app.py"
             path.write_text("class App:\n    def run(self):\n        pass\n", encoding="utf-8")
             output = io.StringIO()
 
@@ -93,7 +103,7 @@ class CliTests(unittest.TestCase):
 
     def test_summarize_reads_only_explicit_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text("# Decision\n\nKeep it explicit.\n", encoding="utf-8")
             output = io.StringIO()
 
@@ -106,7 +116,7 @@ class CliTests(unittest.TestCase):
 
     def test_handoff_summarizes_explicit_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text("# Handoff\n\nContinue here.\n", encoding="utf-8")
             output = io.StringIO()
 
@@ -500,6 +510,16 @@ class CliTests(unittest.TestCase):
             self.assertFalse(config.exists())
             self.assertFalse(data.exists())
             self.assertFalse((Path(directory) / ".codex/hooks.json").exists())
+
+    def test_purge_yes_reports_os_errors_without_traceback(self) -> None:
+        output = io.StringIO()
+
+        with patch("token_optimizer.cli.apply_purge", side_effect=OSError("boom")):
+            with redirect_stdout(output):
+                status = main(["purge", "--project", ".", "--yes"])
+
+        self.assertEqual(status, 1)
+        self.assertIn("purge: boom", output.getvalue())
 
 
 if __name__ == "__main__":

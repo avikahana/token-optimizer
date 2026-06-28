@@ -119,6 +119,18 @@ class DashboardTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 plan_dashboard(project, output_path="README.md")
 
+    def test_rejects_symlinked_codex_parent_for_dashboard_output(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            user_owned = project / "user-owned"
+            user_owned.mkdir()
+            (project / "README.md").write_text("# Project\n", encoding="utf-8")
+            (project / ".codex").symlink_to(user_owned, target_is_directory=True)
+
+            with self.assertRaises(ValueError):
+                plan_dashboard(project)
+            self.assertFalse((user_owned / "token-optimizer/audit-dashboard.html").exists())
+
     def test_allows_custom_dashboard_output_inside_owned_data_dir(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)

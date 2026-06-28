@@ -1,17 +1,25 @@
 import fs from "node:fs";
+import crypto from "node:crypto";
 import path from "node:path";
 import readline from "node:readline";
+import { fileURLToPath } from "node:url";
 
 const SERVER_NAME = "Token Optimizer Hook Control";
 const STATUS_TOOL = "token_optimizer_hook_status";
 const TOGGLE_TOOL = "token_optimizer_hook_toggle";
+const APP_TOOL = "token_optimizer_hook_control_app";
+const APPLY_TOOL = "token_optimizer_hook_apply";
 const MANAGED_MARKER = "TOKEN_OPTIMIZER_MANAGED";
 const HOOK_MODE = "inactive-placeholder-v1";
 const MANAGED_COMMAND =
   `token-optimizer summarize --hook stop --hook-mode ${HOOK_MODE}`;
 const LEGACY_MANAGED_COMMAND = "token-optimizer summarize --hook stop";
 const HOOK_WARNING =
-  "Stop hook installation is experimental and inactive in 0.1.0; use the toggle only after reviewing the dry-run plan.";
+  "Stop-hook entry installation is experimental in 0.1.0 and invokes an intentionally no-op command; use hook control only after reviewing the dry-run plan.";
+const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url));
+const WIDGET_URI = "ui://token-optimizer/hook-control.html";
+const WIDGET_MIME_TYPE = "text/html;profile=mcp-app";
+const REQUEST_TIMEOUT_MS = 30000;
 
 const JsonRpcError = {
   METHOD_NOT_FOUND: -32601,
@@ -37,8 +45,33 @@ function request(method, params) {
   const id = `server-${nextRequestId++}`;
   send({ jsonrpc: "2.0", id, method, params });
   return new Promise((resolve, reject) => {
-    pendingRequests.set(id, { resolve, reject });
+    const timer = setTimeout(() => {
+      if (pendingRequests.delete(id)) {
+        reject(new Error(`${method} timed out before the host responded.`));
+      }
+    }, REQUEST_TIMEOUT_MS);
+    pendingRequests.set(id, {
+      resolve: (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      reject: (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    });
   });
+}
+
+function rejectPendingRequests(error) {
+  for (const [, pending] of pendingRequests) {
+    pending.reject(error);
+  }
+  pendingRequests.clear();
+}
+
+function logProtocolWarning(message) {
+  process.stderr.write(`[token-optimizer-mcp] ${message}\n`);
 }
 
 function requireProjectPath(value) {
@@ -83,7 +116,7 @@ function managedBlock() {
       behavior: HOOK_MODE,
       requiresFreshConsentForActiveBehavior: true,
       description:
-        "Managed by Token Optimizer. Experimental inactive Stop hook; remove with uninstall.",
+        "Managed by Token Optimizer. Experimental Stop-hook entry invoking a no-op command; remove with uninstall.",
     },
     Stop: [
       {
@@ -205,7 +238,7 @@ function mergeManagedBlock(existing) {
 }
 
 function fileChangePlan(project, hooksPath, operation, action, experimental, before, after, warnings) {
-  return {
+  const plan = {
     project,
     hooksPath,
     operation,
@@ -220,6 +253,26 @@ function fileChangePlan(project, hooksPath, operation, action, experimental, bef
     after,
     warnings,
   };
+  plan.planDigest = planDigest(plan);
+  return plan;
+}
+
+function planDigest(plan) {
+  const digestPayload = {
+    project: plan.project,
+    hooksPath: plan.hooksPath,
+    operation: plan.operation,
+    action: plan.action,
+    experimental: plan.experimental,
+    managedMarker: plan.managedMarker,
+    before: plan.before,
+    after: plan.after,
+    warnings: plan.warnings,
+  };
+  return crypto
+    .createHash("sha256")
+    .update(JSON.stringify(digestPayload))
+    .digest("hex");
 }
 
 function planInstall(project) {
@@ -280,7 +333,7 @@ function isInstalled(project) {
 function applyPlan(plan) {
   const before = readExistingHooks(plan.hooksPath);
   if (before !== plan.before) {
-    throw new Error("hooks file changed since the visual toggle plan was created.");
+    throw new Error("hooks file changed since the hook-control plan was created.");
   }
   if (plan.action === "unchanged") {
     return;
@@ -322,26 +375,142 @@ function formatPlanSummary(plan) {
   return lines.join("\n");
 }
 
-function toolResult(text, structuredContent) {
+function toolResult(text, structuredContent, extra = {}) {
   return {
     content: [{ type: "text", text }],
     structuredContent,
+    ...extra,
   };
+}
+
+function hookStatePayload(project) {
+  const installed = isInstalled(project);
+  return {
+    status: installed ? "enabled" : "disabled",
+    enabled: installed,
+    projectPath: project,
+    hooksPath: hooksPathFor(project),
+    managedCommand: MANAGED_COMMAND,
+    hookMode: HOOK_MODE,
+    installPlan: planInstall(project),
+    uninstallPlan: planUninstall(project),
+  };
+}
+
+function readWidgetHtml() {
+  return fs.readFileSync(path.join(SERVER_DIR, "hook-control-widget.html"), "utf8");
 }
 
 async function handleStatus(id, args) {
   const project = requireProjectPath(args.projectPath);
-  const installed = isInstalled(project);
+  const state = hookStatePayload(project);
   sendResult(
     id,
     toolResult(
-      `Experimental inactive Stop hook is ${installed ? "on" : "off"} for ${project}.`,
+      `Experimental Stop-hook entry is ${state.enabled ? "installed" : "not installed"} for ${project}.`,
+      state,
+    ),
+  );
+}
+
+async function handleApp(id, args) {
+  const project = requireProjectPath(args.projectPath);
+  const state = hookStatePayload(project);
+  sendResult(
+    id,
+    toolResult(
+      `Opened Token Optimizer hook control app for ${project}. Current state: ${state.enabled ? "on" : "off"}.`,
+      state,
       {
-        status: installed ? "enabled" : "disabled",
-        projectPath: project,
-        hooksPath: hooksPathFor(project),
-        installPlan: planInstall(project),
-        uninstallPlan: planUninstall(project),
+        _meta: {
+          ui: { resourceUri: WIDGET_URI },
+          "openai/outputTemplate": WIDGET_URI,
+        },
+      },
+    ),
+  );
+}
+
+async function handleApply(id, args) {
+  const project = requireProjectPath(args.projectPath);
+  const desiredEnabled = Boolean(args.enabled);
+  const reviewedDryRun = Boolean(args.reviewedDryRun);
+  const currentlyEnabled = isInstalled(project);
+  const plan = desiredEnabled ? planInstall(project) : planUninstall(project);
+  if (desiredEnabled !== currentlyEnabled && !reviewedDryRun) {
+    sendResult(
+      id,
+      toolResult("No files were changed because dry-run approval was not checked.", {
+        ...hookStatePayload(project),
+        status: "not_approved",
+        desiredEnabled,
+      }),
+    );
+    return;
+  }
+  if (desiredEnabled !== currentlyEnabled && args.reviewedPlanDigest !== plan.planDigest) {
+    sendResult(
+      id,
+      toolResult("No files were changed because the dry-run plan changed after review.", {
+        ...hookStatePayload(project),
+        status: "stale_plan",
+        desiredEnabled,
+        reviewedPlanDigest:
+          typeof args.reviewedPlanDigest === "string" ? args.reviewedPlanDigest : null,
+        currentPlanDigest: plan.planDigest,
+      }),
+    );
+    return;
+  }
+
+  if (desiredEnabled !== currentlyEnabled) {
+    const confirmation = await request("elicitation/create", {
+      mode: "form",
+      message: [
+        "Token Optimizer hook-control app approval",
+        "",
+        `Project: ${project}`,
+        `Requested state: ${desiredEnabled ? "installed" : "not installed"}`,
+        "",
+        formatPlanSummary(plan),
+        "",
+        "Approve only if this dry-run summary matches the change you reviewed in the app.",
+      ].join("\n"),
+      requestedSchema: {
+        type: "object",
+        properties: {
+          approveChange: {
+            type: "boolean",
+            title: "I approve this project-local hook change",
+            default: false,
+          },
+        },
+        required: ["approveChange"],
+      },
+    });
+
+    if (confirmation?.action !== "accept" || !confirmation.content?.approveChange) {
+      sendResult(
+        id,
+        toolResult("Hook control approval was cancelled. No files were changed.", {
+          ...hookStatePayload(project),
+          status: "cancelled",
+          desiredEnabled,
+        }),
+      );
+      return;
+    }
+  }
+
+  applyPlan(plan);
+  const state = hookStatePayload(project);
+  sendResult(
+    id,
+    toolResult(
+      `Experimental Stop-hook entry is now ${state.enabled ? "installed" : "not installed"} for ${project}.`,
+      {
+        ...state,
+        appliedPlan: plan,
       },
     ),
   );
@@ -358,8 +527,9 @@ async function handleToggle(id, args) {
     `Project: ${project}`,
     `Current state: ${currentlyEnabled ? "on" : "off"}`,
     "",
-    "This controls only the inactive experimental Stop hook for this project.",
+    "This controls only the experimental Stop-hook entry for this project.",
     "Turning on installs a Token Optimizer managed block in .codex/hooks.json.",
+    "The installed entry invokes an intentionally no-op command in 0.1.0.",
     "Turning off removes only Token Optimizer managed hook content.",
     "Future active Stop-hook behavior still requires fresh consent.",
     "",
@@ -378,7 +548,7 @@ async function handleToggle(id, args) {
       properties: {
         enabled: {
           type: "boolean",
-          title: "Enable experimental inactive Stop hook",
+          title: "Install experimental no-op Stop-hook entry",
           default: currentlyEnabled,
         },
         reviewedDryRun: {
@@ -422,7 +592,7 @@ async function handleToggle(id, args) {
   sendResult(
     id,
     toolResult(
-      `Experimental inactive Stop hook is now ${desiredEnabled ? "on" : "off"} for ${project}.`,
+      `Experimental Stop-hook entry is now ${desiredEnabled ? "installed" : "not installed"} for ${project}.`,
       {
         status: desiredEnabled ? "enabled" : "disabled",
         projectPath: project,
@@ -443,7 +613,15 @@ async function handleToolCall(id, params) {
     await handleToggle(id, args);
     return;
   }
-  sendError(id, JsonRpcError.INVALID_PARAMS, `Unknown tool: ${params?.name ?? ""}`);
+  if (params?.name === APP_TOOL) {
+    await handleApp(id, args);
+    return;
+  }
+  if (params?.name === APPLY_TOOL) {
+    await handleApply(id, args);
+    return;
+  }
+  sendError(id, JsonRpcError.METHOD_NOT_FOUND, `Unknown tool: ${params?.name ?? ""}`);
 }
 
 async function handleRequest(message) {
@@ -452,13 +630,13 @@ async function handleRequest(message) {
   if (method === "initialize") {
     sendResult(id, {
       protocolVersion: params?.protocolVersion ?? "2025-11-25",
-      capabilities: { tools: {} },
+      capabilities: { tools: {}, resources: {} },
       serverInfo: {
         name: SERVER_NAME,
         version: "0.1.0",
       },
       instructions:
-        "Use token_optimizer_hook_toggle when the user wants a visual on/off control for Token Optimizer's experimental inactive Stop hook. The toggle writes only project-local .codex/hooks.json after dry-run approval.",
+        "Use token_optimizer_hook_control_app for Token Optimizer hook control when MCP UI resources are available; use token_optimizer_hook_toggle as the native approval-form fallback. Both control only the project-local experimental Stop-hook entry, whose command is intentionally no-op in 0.1.0, and write .codex/hooks.json only after dry-run approval.",
     });
     return;
   }
@@ -475,7 +653,7 @@ async function handleRequest(message) {
           name: STATUS_TOOL,
           title: "Token Optimizer Hook Status",
           description:
-            "Read the Token Optimizer experimental inactive Stop hook status for a project.",
+            "Read the Token Optimizer experimental Stop-hook entry status for a project.",
           inputSchema: {
             type: "object",
             properties: {
@@ -498,7 +676,7 @@ async function handleRequest(message) {
           name: TOGGLE_TOOL,
           title: "Token Optimizer Hook Toggle",
           description:
-            "Open a visual on/off form for the experimental inactive Stop hook. Writes only after dry-run review is checked.",
+            "Open a native approval form for the experimental no-op Stop-hook entry. Writes only after dry-run review is checked.",
           inputSchema: {
             type: "object",
             properties: {
@@ -515,6 +693,127 @@ async function handleRequest(message) {
             destructiveHint: false,
             idempotentHint: true,
             openWorldHint: false,
+          },
+        },
+        {
+          name: APP_TOOL,
+          title: "Token Optimizer Hook Control App",
+          description:
+            "Open an interactive app for reviewing and installing or removing Token Optimizer's experimental no-op Stop-hook entry for a project.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              projectPath: {
+                type: "string",
+                description:
+                  "Absolute path to the project whose .codex/hooks.json should be inspected and optionally updated.",
+              },
+            },
+            required: ["projectPath"],
+          },
+          annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false,
+          },
+          _meta: {
+            ui: { resourceUri: WIDGET_URI },
+            "openai/outputTemplate": WIDGET_URI,
+            "openai/toolInvocation/invoking": "Opening Token Optimizer hook control",
+            "openai/toolInvocation/invoked": "Token Optimizer hook control ready",
+          },
+        },
+        {
+          name: APPLY_TOOL,
+          title: "Token Optimizer Apply Hook Toggle",
+          description:
+            "Apply the app-approved experimental no-op Stop-hook entry change for a project.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              projectPath: {
+                type: "string",
+                description:
+                  "Absolute path to the project whose .codex/hooks.json should be updated.",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether the experimental no-op Stop-hook entry should be installed.",
+              },
+              reviewedDryRun: {
+                type: "boolean",
+                description: "Must be true after the user reviews and approves the dry-run summary.",
+              },
+              reviewedPlanDigest: {
+                type: "string",
+                description: "Digest of the dry-run plan shown to the user.",
+              },
+            },
+            required: ["projectPath", "enabled", "reviewedDryRun", "reviewedPlanDigest"],
+          },
+          annotations: {
+            readOnlyHint: false,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false,
+          },
+          _meta: {
+            ui: { visibility: ["app"] },
+          },
+        },
+      ],
+    });
+    return;
+  }
+
+  if (method === "resources/list") {
+    sendResult(id, {
+      resources: [
+        {
+          uri: WIDGET_URI,
+          name: "Token Optimizer Hook Control",
+          title: "Token Optimizer Hook Control",
+          description: "Interactive project-local control for the experimental no-op Stop-hook entry.",
+          mimeType: WIDGET_MIME_TYPE,
+          _meta: {
+            ui: {
+              prefersBorder: true,
+              csp: {
+                connectDomains: [],
+                resourceDomains: [],
+              },
+            },
+            "openai/widgetDescription":
+              "Review and install or remove Token Optimizer's experimental no-op Stop-hook entry for the selected project.",
+          },
+        },
+      ],
+    });
+    return;
+  }
+
+  if (method === "resources/read") {
+    if (params?.uri !== WIDGET_URI) {
+      sendError(id, JsonRpcError.INVALID_PARAMS, `Unknown resource: ${params?.uri ?? ""}`);
+      return;
+    }
+    sendResult(id, {
+      contents: [
+        {
+          uri: WIDGET_URI,
+          mimeType: WIDGET_MIME_TYPE,
+          text: readWidgetHtml(),
+          _meta: {
+            ui: {
+              prefersBorder: true,
+              csp: {
+                connectDomains: [],
+                resourceDomains: [],
+              },
+            },
+            "openai/widgetDescription":
+              "Review and install or remove Token Optimizer's experimental no-op Stop-hook entry for the selected project.",
           },
         },
       ],
@@ -553,7 +852,10 @@ lines.on("line", (line) => {
   let message;
   try {
     message = JSON.parse(line);
-  } catch {
+  } catch (error) {
+    logProtocolWarning(
+      `dropped invalid JSON-RPC line: ${error instanceof Error ? error.message : String(error)}`,
+    );
     return;
   }
 
@@ -566,9 +868,19 @@ lines.on("line", (line) => {
       } else {
         pending.resolve(message.result);
       }
+    } else {
+      logProtocolWarning(`dropped response for unknown request id: ${String(message.id)}`);
     }
     return;
   }
 
   void handleRequest(message);
+});
+
+lines.on("close", () => {
+  rejectPendingRequests(new Error("MCP input stream closed before the host responded."));
+});
+
+lines.on("error", (error) => {
+  rejectPendingRequests(error instanceof Error ? error : new Error(String(error)));
 });

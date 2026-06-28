@@ -4,7 +4,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from token_optimizer.paths import UnsafePathError, resolve_project_path, resolve_under_project
+from token_optimizer.paths import (
+    UnsafePathError,
+    reject_symlink_components_for_path,
+    resolve_project_path,
+    resolve_under_project,
+)
 
 
 class PathSafetyTests(unittest.TestCase):
@@ -36,6 +41,17 @@ class PathSafetyTests(unittest.TestCase):
 
             with self.assertRaises(UnsafePathError):
                 resolve_under_project(project, "../outside")
+
+    def test_reject_symlink_components_for_path_checks_first_absolute_component(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            target = root / "target"
+            target.mkdir()
+            symlink = root / "link"
+            symlink.symlink_to(target, target_is_directory=True)
+
+            with self.assertRaises(UnsafePathError):
+                reject_symlink_components_for_path(symlink / "file.txt", "fixture")
 
 
 if __name__ == "__main__":

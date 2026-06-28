@@ -19,7 +19,7 @@ MANAGED_COMMAND = (
 )
 LEGACY_MANAGED_COMMAND = "token-optimizer summarize --hook stop"
 EXPERIMENTAL_HOOK_WARNING = (
-    "Stop hook installation is experimental and inactive in 0.1.0; "
+    "Stop-hook entry installation is experimental and invokes a no-op command in 0.1.0; "
     "use --experimental with --yes only after reviewing the dry-run plan."
 )
 
@@ -346,7 +346,7 @@ def _quiet_hook_block() -> dict[str, Any]:
             "behavior": INACTIVE_PLACEHOLDER_HOOK_MODE,
             "requiresFreshConsentForActiveBehavior": True,
             "description": (
-                "Managed by Token Optimizer. Experimental inactive Stop hook; "
+                "Managed by Token Optimizer. Experimental Stop-hook entry invoking a no-op command; "
                 "remove with uninstall."
             ),
         },

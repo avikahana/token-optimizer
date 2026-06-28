@@ -63,10 +63,10 @@ DEFAULT_LIMITATIONS = (
 def build_static_benchmark_report(fixture_path: str | Path) -> BenchmarkReport:
     """Build a static benchmark report from one explicit fixture."""
 
-    fixture = _resolve_fixture(fixture_path)
-    baseline_dir = _required_directory(fixture / "baseline", "baseline")
-    optimized_dir = _required_directory(fixture / "optimized", "optimized")
-    must_preserve = _required_file(fixture / "must-preserve.md", "must-preserve")
+    fixture = resolve_benchmark_fixture(fixture_path)
+    baseline_dir = required_fixture_directory(fixture / "baseline", "baseline")
+    optimized_dir = required_fixture_directory(fixture / "optimized", "optimized")
+    must_preserve = required_fixture_file(fixture / "must-preserve.md", "must-preserve")
 
     baseline_files = _measure_files(fixture, baseline_dir)
     optimized_files = _measure_files(fixture, optimized_dir)
@@ -149,18 +149,31 @@ def benchmark_report_to_json(report: BenchmarkReport) -> str:
     return json.dumps(payload, indent=2, sort_keys=True)
 
 
-def _resolve_fixture(fixture_path: str | Path) -> Path:
+def resolve_benchmark_fixture(
+    fixture_path: str | Path,
+    *,
+    label: str = "benchmark fixture",
+    require_contract: bool = False,
+) -> Path:
+    """Resolve and validate an explicit benchmark fixture directory."""
+
     raw_path = Path(fixture_path).expanduser()
-    reject_symlink(raw_path, "benchmark fixture")
+    reject_symlink(raw_path, label)
     fixture = raw_path.resolve(strict=False)
     if not fixture.exists():
         raise BenchmarkRunnerError(f"fixture does not exist: {fixture}")
     if not fixture.is_dir():
         raise BenchmarkRunnerError(f"fixture is not a directory: {fixture}")
+    if require_contract:
+        required_fixture_directory(fixture / "baseline", "baseline")
+        required_fixture_directory(fixture / "optimized", "optimized")
+        required_fixture_file(fixture / "must-preserve.md", "must-preserve")
     return fixture
 
 
-def _required_directory(path: Path, label: str) -> Path:
+def required_fixture_directory(path: Path, label: str) -> Path:
+    """Return a required fixture directory, rejecting symlinks."""
+
     reject_symlink(path, label)
     if not path.exists():
         raise BenchmarkRunnerError(f"{label} directory does not exist: {path}")
@@ -169,13 +182,55 @@ def _required_directory(path: Path, label: str) -> Path:
     return path
 
 
-def _required_file(path: Path, label: str) -> Path:
+def required_fixture_file(path: Path, label: str) -> Path:
+    """Return a required fixture file, rejecting symlinks."""
+
     reject_symlink(path, label)
     if not path.exists():
         raise BenchmarkRunnerError(f"{label} file does not exist: {path}")
     if not path.is_file():
         raise BenchmarkRunnerError(f"{label} path is not a file: {path}")
     return path
+
+
+def fixture_side_text(fixture: Path, side: str) -> str:
+    """Read one fixture side as labeled text chunks."""
+
+    directory = required_fixture_directory(fixture / side, side)
+    chunks: list[str] = []
+    for path in sorted(directory.rglob("*")):
+        if path.is_symlink():
+            raise BenchmarkRunnerError(f"fixture contains symlink: {path}")
+        if not path.is_file():
+            continue
+        relative = path.relative_to(fixture).as_posix()
+        chunks.append(f"## {relative}\n\n{path.read_text(encoding='utf-8')}")
+    if not chunks:
+        raise BenchmarkRunnerError(f"fixture side has no files: {directory}")
+    return "\n\n".join(chunks)
+
+
+def preservation_checks_for_fixture(fixture: Path) -> tuple[PreservationCheck, ...]:
+    """Check that the optimized fixture side preserves required facts."""
+
+    optimized_text = fixture_side_text(fixture, "optimized")
+    return tuple(
+        PreservationCheck(fact=fact, present=fact in optimized_text)
+        for fact in must_preserve_facts(fixture / "must-preserve.md")
+    )
+
+
+def must_preserve_facts(path: Path) -> tuple[str, ...]:
+    """Read required facts from a must-preserve file."""
+
+    facts: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("- "):
+            facts.append(stripped[2:])
+    if not facts:
+        raise BenchmarkRunnerError(f"must-preserve file has no facts: {path}")
+    return tuple(facts)
 
 
 def _measure_files(fixture: Path, directory: Path) -> tuple[BenchmarkFileEstimate, ...]:
@@ -210,14 +265,7 @@ def _preservation_checks(
 
 
 def _must_preserve_facts(path: Path) -> tuple[str, ...]:
-    facts: list[str] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped.startswith("- "):
-            facts.append(stripped[2:])
-    if not facts:
-        raise BenchmarkRunnerError(f"must-preserve file has no facts: {path}")
-    return tuple(facts)
+    return must_preserve_facts(path)
 
 
 def _read_text_files(directory: Path) -> str:

@@ -10,7 +10,7 @@ from token_optimizer.outline import OutlineError, build_outline, format_outline
 class MarkdownOutlineTests(unittest.TestCase):
     def test_builds_markdown_outline_from_headings(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text("# Title\n\n## Work\nText\n### Detail\n", encoding="utf-8")
 
             report = build_outline(path)
@@ -21,7 +21,7 @@ class MarkdownOutlineTests(unittest.TestCase):
 
     def test_ignores_markdown_headings_inside_fenced_code(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text("# Title\n```markdown\n# Ignored\n```\n## Kept\n", encoding="utf-8")
 
             report = build_outline(path)
@@ -30,7 +30,7 @@ class MarkdownOutlineTests(unittest.TestCase):
 
     def test_does_not_close_fenced_code_with_different_marker(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text(
                 "# Title\n```markdown\n# Ignored\n~~~\n# Still ignored\n```\n## Kept\n",
                 encoding="utf-8",
@@ -42,7 +42,7 @@ class MarkdownOutlineTests(unittest.TestCase):
 
     def test_detects_setext_headings(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text("Title\n=====\n\nWork\n----\n", encoding="utf-8")
 
             report = build_outline(path)
@@ -52,7 +52,7 @@ class MarkdownOutlineTests(unittest.TestCase):
 
     def test_formats_markdown_outline(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text("# Title\n\n## Work\n", encoding="utf-8")
 
             rendered = format_outline(build_outline(path))
@@ -65,7 +65,7 @@ class MarkdownOutlineTests(unittest.TestCase):
 class PythonOutlineTests(unittest.TestCase):
     def test_builds_python_outline_from_classes_and_functions(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "app.py"
+            path = Path(directory).resolve() / "app.py"
             path.write_text(
                 "def top():\n"
                 "    def nested():\n"
@@ -92,7 +92,7 @@ class PythonOutlineTests(unittest.TestCase):
 
     def test_rejects_invalid_python(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "broken.py"
+            path = Path(directory).resolve() / "broken.py"
             path.write_text("def nope(:\n", encoding="utf-8")
 
             with self.assertRaises(OutlineError):
@@ -102,7 +102,7 @@ class PythonOutlineTests(unittest.TestCase):
 class OutlineSafetyTests(unittest.TestCase):
     def test_rejects_unsupported_file_type(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.txt"
+            path = Path(directory).resolve() / "notes.txt"
             path.write_text("hello", encoding="utf-8")
 
             with self.assertRaises(OutlineError):
@@ -110,17 +110,30 @@ class OutlineSafetyTests(unittest.TestCase):
 
     def test_rejects_symlink_input(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            target = Path(directory) / "target.md"
+            root = Path(directory).resolve()
+            target = root / "target.md"
             target.write_text("# Title\n", encoding="utf-8")
-            link = Path(directory) / "link.md"
+            link = root / "link.md"
             link.symlink_to(target)
 
             with self.assertRaises(ValueError):
                 build_outline(link)
 
+    def test_rejects_symlinked_parent_input(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            outside = root / "outside"
+            outside.mkdir()
+            (outside / "target.md").write_text("# Title\n", encoding="utf-8")
+            link_dir = root / "linked"
+            link_dir.symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaises(ValueError):
+                build_outline(link_dir / "target.md")
+
     def test_reports_no_structure_for_plain_markdown(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text("plain text only\n", encoding="utf-8")
 
             rendered = format_outline(build_outline(path))

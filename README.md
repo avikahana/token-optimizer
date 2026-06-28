@@ -143,9 +143,9 @@
       <td>Advanced experimental Stop-hook plan</td>
     </tr>
     <tr>
-      <td>Visual hook toggle</td>
+      <td>Hook MCP control</td>
       <td>Token Optimizer plugin hook control</td>
-      <td>Native on/off approval form for the inactive experimental Stop hook</td>
+      <td>Interactive MCP control with native approval-form fallback for the experimental no-op Stop-hook entry</td>
     </tr>
   </tbody>
 </table>
@@ -260,7 +260,7 @@ token-optimizer summarize README.md SECURITY.md
     <tr><td>Command output is drowning useful facts</td><td><code>audit</code> flags noisy artifacts before they become handoff clutter</td></tr>
     <tr><td>You want a dashboard without a service</td><td><code>dashboard --dry-run</code> and <code>--yes</code> produce static HTML only, with Expert mode for raw audit JSON</td></tr>
     <tr><td>You need benchmark discipline</td><td><code>benchmark --fixture</code> separates static estimates from provider-specific counts</td></tr>
-    <tr><td>You are considering hooks</td><td><code>hooks install --dry-run</code> or the plugin visual toggle shows the exact managed block before any write</td></tr>
+    <tr><td>You are considering hooks</td><td><code>hooks install --dry-run</code>, the plugin hook control app, or the native fallback form shows the exact managed block before any write</td></tr>
   </tbody>
 </table>
 
@@ -277,7 +277,7 @@ token-optimizer summarize README.md SECURITY.md
   <tbody>
     <tr><td>Network</td><td>No default network calls</td><td>Live provider benchmarks only when explicitly invoked</td></tr>
     <tr><td>Persistence</td><td>No raw transcripts, raw file contents, or raw tool output</td><td>Project-local config/data with <code>--yes</code></td></tr>
-    <tr><td>Hooks</td><td>No hook installed by plugin installation</td><td>Advanced experimental Stop hook requires dry-run review plus <code>--yes --experimental</code> or explicit visual toggle approval</td></tr>
+    <tr><td>Hooks</td><td>No hook installed by plugin installation</td><td>Advanced experimental Stop-hook entry requires dry-run review plus <code>--yes --experimental</code>, hook control app approval, or explicit native-form approval; the installed command is intentionally no-op in 0.1.0</td></tr>
     <tr><td>Dashboard</td><td>No server or watcher</td><td>Static HTML file under <code>.codex/token-optimizer/</code></td></tr>
     <tr><td>Cleanup</td><td>No implicit deletes</td><td><code>purge --dry-run</code>, then <code>purge --yes</code></td></tr>
   </tbody>
@@ -369,8 +369,8 @@ token-optimizer summarize README.md SECURITY.md
     <tr><td><code>purge --project . --dry-run</code></td><td>read</td><td>Cleanup plan</td></tr>
     <tr><td><code>purge --project . --yes</code></td><td>write</td><td>Removes Token Optimizer-owned state</td></tr>
     <tr><td><code>hooks install --project . --dry-run</code></td><td>read</td><td>Advanced experimental hook plan</td></tr>
-    <tr><td><code>hooks install --project . --yes --experimental</code></td><td>write</td><td>Installs inactive placeholder Stop hook</td></tr>
-    <tr><td>Plugin visual hook toggle</td><td>write, after approval</td><td>Installs or removes only the inactive Token Optimizer Stop hook block</td></tr>
+    <tr><td><code>hooks install --project . --yes --experimental</code></td><td>write</td><td>Installs an active Stop-hook entry that invokes an intentionally no-op command</td></tr>
+    <tr><td>Plugin hook control app/native fallback</td><td>write, after approval</td><td>Installs or removes only the Token Optimizer managed no-op Stop-hook entry</td></tr>
     <tr><td><code>hooks uninstall --project . --yes</code></td><td>write</td><td>Removes managed hook state</td></tr>
   </tbody>
 </table>
@@ -382,8 +382,9 @@ token-optimizer summarize README.md SECURITY.md
 <p align="center">
   The Codex plugin lives in <code>.codex-plugin/plugin.json</code> with a safe
   usage skill under <code>skills/token-optimizer/</code> and a local MCP
-  hook-control server. It does not install hooks by default, and it has no app,
-  daemon, networked service, or background behavior.
+  hook-control server with an optional MCP UI resource. It does not install
+  hooks by default, and it has no daemon, networked service, or background
+  behavior.
 </p>
 
 <table align="center">
@@ -395,9 +396,9 @@ token-optimizer summarize README.md SECURITY.md
   </thead>
   <tbody>
     <tr><td><code>.codex-plugin/</code></td><td>plugin-bundled hooks</td></tr>
-    <tr><td><code>.mcp.json</code>, <code>mcp/</code></td><td>apps</td></tr>
-    <tr><td><code>skills/</code></td><td>networked control surfaces</td></tr>
-    <tr><td><code>assets/</code></td><td>apps</td></tr>
+    <tr><td><code>.mcp.json</code>, <code>mcp/</code></td><td>networked control surfaces</td></tr>
+    <tr><td><code>skills/</code></td><td>plugin-bundled hooks</td></tr>
+    <tr><td><code>assets/</code></td><td>daemons, services</td></tr>
     <tr><td></td><td>scripts, daemons, services</td></tr>
   </tbody>
 </table>
@@ -415,6 +416,9 @@ python3 scripts/check_release_artifacts.py
 PYTHONPATH=/private/tmp/token-optimizer-validator-pyyaml python3 /path/to/validate_plugin.py .
 PYTHONPATH=/private/tmp/token-optimizer-validator-pyyaml python3 /path/to/validate_plugin.py marketplace/plugins/token-optimizer
 ```
+
+For local marketplace install checks, use
+[`docs/local-marketplace-verification.md`](docs/local-marketplace-verification.md).
 
 <table align="center">
   <thead>

@@ -42,7 +42,7 @@ class NoNetworkTests(unittest.TestCase):
 
     def test_default_cli_paths_do_not_open_network_sockets(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            project = Path(directory)
+            project = Path(directory).resolve()
             note = project / "note.md"
             note.write_text("# Note\n\nKeep default paths local.\n", encoding="utf-8")
             (project / "README.md").write_text("# Project\n", encoding="utf-8")

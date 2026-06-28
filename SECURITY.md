@@ -5,6 +5,11 @@ commands inspect explicit local project inputs and do not start daemons, install
 global hooks, capture raw transcripts, persist raw file contents, persist raw
 tool output, or make network requests.
 
+Project scans, mutating commands, and Token Optimizer-owned output paths are
+constrained to the selected project. Read-only explicit-input commands such as
+`outline` and `summarize` may read absolute local file paths outside the project
+when the user names those files directly.
+
 ## Default Behavior
 
 - `doctor`, `audit`, `outline`, `summarize`, `handoff`, dashboard dry-runs,
@@ -13,10 +18,11 @@ tool output, or make network requests.
 - Mutating CLI commands require an explicit `--yes` flag, and hook installation
   also requires `--experimental`.
 - The Codex plugin package does not install hooks by default. It ships a local
-  MCP hook-control server that can open a visual on/off approval form for the
-  inactive experimental Stop hook. The form shows the dry-run plan and writes
-  only after explicit approval.
-- The Codex plugin package does not ship global hooks, apps, daemons, services,
+  MCP hook-control server that can open an interactive MCP control for the
+  experimental Stop-hook entry, with a native approval form as the fallback.
+  Both controls show the dry-run plan and write only after explicit approval;
+  the installed entry invokes an intentionally no-op command in 0.1.0.
+- The Codex plugin package does not ship global hooks, daemons, services,
   background processes, or networked control surfaces.
 - Managed project state is constrained to `.codex/token-optimizer.json`,
   `.codex/token-optimizer/`, and managed Token Optimizer hook blocks.

@@ -5,7 +5,7 @@ Token Optimizer should not persist anything outside the project in the MVP.
 | Path | Created By | Contains | Removed By |
 |---|---|---|---|
 | `.codex/token-optimizer.json` | `token-optimizer config init --yes` | project-local settings and owned-output defaults | `token-optimizer purge --yes` |
-| `.codex/hooks.json` managed block | `token-optimizer hooks install --yes --experimental` or the plugin visual hook toggle | advanced experimental inactive Stop hook command reference and Token Optimizer marker | `token-optimizer hooks uninstall --yes`, `token-optimizer purge --yes`, or toggling the visual hook control off |
+| `.codex/hooks.json` managed block | `token-optimizer hooks install --yes --experimental` or the plugin hook control app or native fallback | advanced experimental Stop-hook entry that invokes an intentionally no-op command, plus the Token Optimizer marker | `token-optimizer hooks uninstall --yes`, `token-optimizer purge --yes`, or approving hook control removal |
 | `.codex/token-optimizer/` | `token-optimizer config init --yes` and explicit output commands | generated Token Optimizer outputs only | `token-optimizer purge --yes` |
 | `.codex/token-optimizer/audit-dashboard.html` | `token-optimizer dashboard --yes` | static HTML dashboard generated from `audit --json` data, not raw file contents | `token-optimizer purge --yes` |
 

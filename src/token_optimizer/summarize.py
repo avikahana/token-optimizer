@@ -7,7 +7,7 @@ from pathlib import Path
 
 from token_optimizer.git_state import GitStateSummary, build_git_state_summary, format_git_state_summary
 from token_optimizer.outline import OutlineError, build_outline
-from token_optimizer.paths import reject_symlink
+from token_optimizer.paths import reject_symlink_components_for_path
 
 
 class SummaryError(ValueError):
@@ -79,7 +79,7 @@ def format_summary(report: SummaryReport) -> str:
 
 def _summarize_file(file_path: str | Path) -> InputSummary:
     raw_path = Path(file_path).expanduser()
-    reject_symlink(raw_path, "summary input")
+    reject_symlink_components_for_path(raw_path, "summary input")
     path = raw_path.resolve(strict=False)
     if not path.exists():
         raise SummaryError(f"file does not exist: {path}")

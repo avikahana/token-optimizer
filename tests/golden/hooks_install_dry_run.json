@@ -17,7 +17,7 @@
     ],
     "_tokenOptimizer": {
       "behavior": "inactive-placeholder-v1",
-      "description": "Managed by Token Optimizer. Experimental inactive Stop hook; remove with uninstall.",
+      "description": "Managed by Token Optimizer. Experimental Stop-hook entry invoking a no-op command; remove with uninstall.",
       "feature": "experimental-stop-hook",
       "marker": "TOKEN_OPTIMIZER_MANAGED",
       "profile": "quiet",
@@ -28,6 +28,6 @@
   "profile": "quiet",
   "project": "<PROJECT>",
   "warnings": [
-    "Stop hook installation is experimental and inactive in 0.1.0; use --experimental with --yes only after reviewing the dry-run plan."
+    "Stop-hook entry installation is experimental and invokes a no-op command in 0.1.0; use --experimental with --yes only after reviewing the dry-run plan."
   ]
 }

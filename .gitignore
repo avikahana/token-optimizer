@@ -21,3 +21,4 @@ dist/
 
 .codex/token-optimizer/
 .codex/token-optimizer.json
+.codex/hooks.json

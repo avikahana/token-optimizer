@@ -15,7 +15,7 @@ class SummaryTests(unittest.TestCase):
 
     def test_summarizes_markdown_input_with_outline_and_excerpt(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "notes.md"
+            path = Path(directory).resolve() / "notes.md"
             path.write_text("# Decision\n\nUse explicit inputs.\n", encoding="utf-8")
 
             report = build_summary([str(path)])
@@ -28,7 +28,7 @@ class SummaryTests(unittest.TestCase):
 
     def test_summarizes_python_input_with_outline(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "app.py"
+            path = Path(directory).resolve() / "app.py"
             path.write_text("class App:\n    def run(self):\n        pass\n", encoding="utf-8")
 
             rendered = format_summary(build_summary([str(path)]))
@@ -38,7 +38,7 @@ class SummaryTests(unittest.TestCase):
 
     def test_summarizes_unsupported_input_without_outline(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "log.txt"
+            path = Path(directory).resolve() / "log.txt"
             path.write_text("build failed\nnext line\n", encoding="utf-8")
 
             rendered = format_summary(build_summary([str(path)]))
@@ -48,13 +48,26 @@ class SummaryTests(unittest.TestCase):
 
     def test_rejects_symlink_input(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            target = Path(directory) / "target.md"
+            root = Path(directory).resolve()
+            target = root / "target.md"
             target.write_text("# Title\n", encoding="utf-8")
-            link = Path(directory) / "link.md"
+            link = root / "link.md"
             link.symlink_to(target)
 
             with self.assertRaises(ValueError):
                 build_summary([str(link)])
+
+    def test_rejects_symlinked_parent_input(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            outside = root / "outside"
+            outside.mkdir()
+            (outside / "target.md").write_text("# Title\n", encoding="utf-8")
+            link_dir = root / "linked"
+            link_dir.symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaises(ValueError):
+                build_summary([str(link_dir / "target.md")])
 
     def test_can_include_opt_in_git_state_without_file_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

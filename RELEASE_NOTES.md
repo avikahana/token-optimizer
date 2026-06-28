@@ -22,7 +22,7 @@ Implemented:
 - project-local config/data initialization
 - top-level purge for Token Optimizer-owned state
 - optional git-state summary support
-- Codex plugin with safe usage skill and local visual hook-control MCP server
+- Codex plugin with safe usage skill, local visual hook-control MCP server, and optional MCP control surface
 - marketplace icon, logo, dark logo, and screenshot assets
 
 Safety notes:
@@ -32,9 +32,9 @@ Safety notes:
 - no raw transcript, raw file-content, or raw tool-output persistence by default
 - Stop hook install apply requires explicit `--yes --experimental`; plugin
   installation does not enable hooks
-- the 0.1.0 managed Stop hook target is intentionally inactive and carries an
-  `inactive-placeholder-v1` mode marker so future active behavior requires
-  fresh consent
+- the 0.1.0 managed Stop-hook entry invokes an intentionally no-op command and
+  carries an `inactive-placeholder-v1` mode marker so future active behavior
+  requires fresh consent
 - hook uninstall remains available with explicit `--yes` so advanced users can
   disable/remove managed hook state
 - dashboard, config init, and purge support `--dry-run` before writes/removals

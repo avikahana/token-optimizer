@@ -28,6 +28,7 @@
       "Local",
       "Read-only",
       "Interactive hook control",
+      "MCP control",
       "Static report",
       "CLI"
     ],
@@ -37,7 +38,7 @@
     "defaultPrompt": [
       "Health check: run Token Optimizer doctor for this project.",
       "Generate report: create a local Token Optimizer audit report for this project.",
-      "Advanced hook: open the visual experimental Stop hook toggle."
+      "Hook control: open the interactive Stop hook MCP control."
     ],
     "brandColor": "#2563EB",
     "composerIcon": "./assets/icon.png",

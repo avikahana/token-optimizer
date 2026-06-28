@@ -29,6 +29,7 @@ class PluginManifestTests(unittest.TestCase):
         self.assertNotIn("hooks", manifest)
         self.assertNotIn("apps", manifest)
         self.assertIn("Interactive hook control", manifest["interface"]["capabilities"])
+        self.assertIn("MCP control", manifest["interface"]["capabilities"])
         self.assertEqual(manifest["interface"]["displayName"], "Token Optimizer")
         self.assertEqual(manifest["interface"]["websiteURL"], self.REPOSITORY_URL)
         self.assertEqual(manifest["interface"]["privacyPolicyURL"], self.PRIVACY_URL)
@@ -116,10 +117,33 @@ class PluginManifestTests(unittest.TestCase):
         self.assertTrue((plugin_root / "skills/token-optimizer/SKILL.md").is_file())
         self.assertTrue((plugin_root / ".mcp.json").is_file())
         self.assertTrue((plugin_root / "mcp/server.mjs").is_file())
+        self.assertTrue((plugin_root / "mcp/hook-control-widget.html").is_file())
         self.assertTrue((plugin_root / "assets/icon.png").is_file())
         self.assertTrue((plugin_root / "assets/screenshot-dashboard.png").is_file())
         self.assertNotIn("hooks", manifest)
         self.assertNotIn("apps", manifest)
+
+    def test_repo_local_marketplace_package_matches_root_plugin_files(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        plugin_root = root / "marketplace/plugins/token-optimizer"
+        mirrored_files = (
+            ".codex-plugin/plugin.json",
+            ".mcp.json",
+            "mcp/server.mjs",
+            "mcp/hook-control-widget.html",
+            "skills/token-optimizer/SKILL.md",
+            "assets/icon.png",
+            "assets/logo.png",
+            "assets/logo-dark.png",
+            "assets/screenshot-dashboard.png",
+        )
+
+        for relative_path in mirrored_files:
+            with self.subTest(relative_path=relative_path):
+                self.assertEqual(
+                    (root / relative_path).read_bytes(),
+                    (plugin_root / relative_path).read_bytes(),
+                )
 
     def test_plugin_mcp_config_points_to_local_server(self) -> None:
         root = Path(__file__).resolve().parents[1]
@@ -155,7 +179,216 @@ class PluginManifestTests(unittest.TestCase):
 
                 self._send_mcp(process, {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
                 tools = self._read_mcp(process)["result"]["tools"]
-                self.assertIn("token_optimizer_hook_toggle", {tool["name"] for tool in tools})
+                tools_by_name = {tool["name"]: tool for tool in tools}
+                self.assertIn("token_optimizer_hook_toggle", tools_by_name)
+                self.assertIn("token_optimizer_hook_control_app", tools_by_name)
+                self.assertIn("token_optimizer_hook_apply", tools_by_name)
+                self.assertIn(
+                    "token_optimizer_hook_control_app",
+                    initialize["result"]["instructions"],
+                )
+                self.assertEqual(
+                    tools_by_name["token_optimizer_hook_control_app"]["_meta"]["ui"]["resourceUri"],
+                    "ui://token-optimizer/hook-control.html",
+                )
+                self.assertEqual(
+                    tools_by_name["token_optimizer_hook_apply"]["_meta"]["ui"]["visibility"],
+                    ["app"],
+                )
+
+                self._send_mcp(process, {"jsonrpc": "2.0", "id": 20, "method": "resources/list", "params": {}})
+                resources = self._read_mcp(process)["result"]["resources"]
+                self.assertIn("ui://token-optimizer/hook-control.html", {resource["uri"] for resource in resources})
+
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 21,
+                        "method": "resources/read",
+                        "params": {"uri": "ui://token-optimizer/hook-control.html"},
+                    },
+                )
+                resource = self._read_mcp(process)["result"]["contents"][0]
+                self.assertEqual(resource["mimeType"], "text/html;profile=mcp-app")
+                self.assertIn("Token Optimizer Hook Control", resource["text"])
+                self.assertIn("token_optimizer_hook_apply", resource["text"])
+                self.assertIn("Install no-op hook entry", resource["text"])
+                self.assertIn("reviewedPlanDigest", resource["text"])
+                self.assertIn("trustedParentOrigin", resource["text"])
+                self.assertIn("window.parent.postMessage(message, trustedParentOrigin)", resource["text"])
+                self.assertIn("event.origin !== trustedParentOrigin", resource["text"])
+                self.assertIn("Host bridge origin is unavailable.", resource["text"])
+                self.assertNotIn('postMessage({ jsonrpc: "2.0", method, params }, "*")', resource["text"])
+
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 22,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "token_optimizer_hook_control_app",
+                            "arguments": {"projectPath": str(project)},
+                        },
+                    },
+                )
+                app_result = self._read_mcp(process)["result"]
+                self.assertEqual(app_result["_meta"]["ui"]["resourceUri"], "ui://token-optimizer/hook-control.html")
+                self.assertEqual(app_result["structuredContent"]["status"], "disabled")
+                install_digest = app_result["structuredContent"]["installPlan"]["planDigest"]
+                self.assertEqual(len(install_digest), 64)
+
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 23,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "token_optimizer_hook_apply",
+                            "arguments": {
+                                "projectPath": str(project),
+                                "enabled": True,
+                                "reviewedDryRun": False,
+                            },
+                        },
+                    },
+                )
+                not_approved = self._read_mcp(process)["result"]["structuredContent"]
+                self.assertEqual(not_approved["status"], "not_approved")
+                self.assertFalse((project / ".codex/hooks.json").exists())
+
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 26,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "token_optimizer_hook_apply",
+                            "arguments": {
+                                "projectPath": str(project),
+                                "enabled": True,
+                                "reviewedDryRun": True,
+                                "reviewedPlanDigest": "stale",
+                            },
+                        },
+                    },
+                )
+                stale_plan = self._read_mcp(process)["result"]["structuredContent"]
+                self.assertEqual(stale_plan["status"], "stale_plan")
+                self.assertFalse((project / ".codex/hooks.json").exists())
+
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 24,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "token_optimizer_hook_apply",
+                            "arguments": {
+                                "projectPath": str(project),
+                                "enabled": True,
+                                "reviewedDryRun": True,
+                                "reviewedPlanDigest": install_digest,
+                            },
+                        },
+                    },
+                )
+                approval = self._read_mcp(process)
+                self.assertEqual(approval["method"], "elicitation/create")
+                self.assertIn("Token Optimizer hook-control app approval", approval["params"]["message"])
+                self.assertIn("Requested state: installed", approval["params"]["message"])
+                self.assertEqual(
+                    approval["params"]["requestedSchema"]["properties"]["approveChange"]["title"],
+                    "I approve this project-local hook change",
+                )
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": approval["id"],
+                        "result": {
+                            "action": "accept",
+                            "content": {"approveChange": False},
+                        },
+                    },
+                )
+                cancelled = self._read_mcp(process)["result"]["structuredContent"]
+                self.assertEqual(cancelled["status"], "cancelled")
+                self.assertFalse((project / ".codex/hooks.json").exists())
+
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 27,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "token_optimizer_hook_apply",
+                            "arguments": {
+                                "projectPath": str(project),
+                                "enabled": True,
+                                "reviewedDryRun": True,
+                                "reviewedPlanDigest": install_digest,
+                            },
+                        },
+                    },
+                )
+                approval = self._read_mcp(process)
+                self.assertEqual(approval["method"], "elicitation/create")
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": approval["id"],
+                        "result": {
+                            "action": "accept",
+                            "content": {"approveChange": True},
+                        },
+                    },
+                )
+                app_apply = self._read_mcp(process)["result"]["structuredContent"]
+                self.assertTrue(app_apply["enabled"])
+                self.assertTrue((project / ".codex/hooks.json").exists())
+                uninstall_digest = app_apply["uninstallPlan"]["planDigest"]
+
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 25,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "token_optimizer_hook_apply",
+                            "arguments": {
+                                "projectPath": str(project),
+                                "enabled": False,
+                                "reviewedDryRun": True,
+                                "reviewedPlanDigest": uninstall_digest,
+                            },
+                        },
+                    },
+                )
+                approval = self._read_mcp(process)
+                self.assertEqual(approval["method"], "elicitation/create")
+                self.assertIn("Requested state: not installed", approval["params"]["message"])
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": approval["id"],
+                        "result": {
+                            "action": "accept",
+                            "content": {"approveChange": True},
+                        },
+                    },
+                )
+                app_disable = self._read_mcp(process)["result"]["structuredContent"]
+                self.assertFalse(app_disable["enabled"])
+                self.assertFalse((project / ".codex/hooks.json").exists())
 
                 self._send_mcp(
                     process,
@@ -181,7 +414,7 @@ class PluginManifestTests(unittest.TestCase):
                 schema = request["params"]["requestedSchema"]
                 self.assertEqual(
                     schema["properties"]["enabled"]["title"],
-                    "Enable experimental inactive Stop hook",
+                    "Install experimental no-op Stop-hook entry",
                 )
                 self.assertEqual(schema["properties"]["enabled"]["type"], "boolean")
                 self.assertEqual(schema["properties"]["reviewedDryRun"]["type"], "boolean")

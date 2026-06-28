@@ -425,6 +425,19 @@ class HookFileChangePlanTests(unittest.TestCase):
             with self.assertRaises(UnsafePathError):
                 plan_hook_uninstall_file_change(project)
 
+    def test_file_change_plans_reject_symlinked_codex_parent_inside_project(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            user_owned = project / "user-owned"
+            user_owned.mkdir()
+            (project / ".codex").symlink_to(user_owned, target_is_directory=True)
+
+            with self.assertRaises(UnsafePathError):
+                plan_hook_install_file_change(project)
+            with self.assertRaises(UnsafePathError):
+                plan_hook_uninstall_file_change(project)
+            self.assertFalse((user_owned / "hooks.json").exists())
+
     def test_format_file_change_plan_includes_action_and_planned_output(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)

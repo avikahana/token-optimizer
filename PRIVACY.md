@@ -19,14 +19,19 @@ By default, Token Optimizer does not:
 - read API keys from command-line flags
 
 The Codex plugin does not install hooks by default. It includes a local MCP
-hook-control server that can open a visual on/off approval form for the inactive
-experimental Stop hook. The control shows the dry-run plan first, requires
-explicit approval, and writes only project-local Token Optimizer hook config.
-It does not add apps, daemons, network calls, telemetry, or background behavior.
+hook-control server that can open an interactive MCP hook-control surface when
+the host supports MCP UI resources, with a native on/off approval form as the
+fallback.
+The controls show the dry-run plan first, require explicit approval, and write
+only project-local Token Optimizer hook config. They do not add daemons,
+network calls, telemetry, or background behavior.
 
 ## Local Files
 
-Token Optimizer commands operate on explicit project-local inputs. Current
+Token Optimizer commands operate on explicit local inputs. Project scans,
+mutating commands, and owned output paths are project-local. Read-only
+explicit-input commands such as `outline` and `summarize` may read absolute file
+paths outside the project when the user names those files directly. Current
 commands such as `doctor`, `audit`, `outline`, `summarize`, and the default
 benchmark runner print reports to stdout unless the user chooses to redirect or
 save that output.
@@ -35,7 +40,8 @@ The current implemented mutating paths are:
 
 - `.codex/hooks.json` managed block, created only by
   `token-optimizer hooks install --project . --yes --experimental` or by
-  approving the plugin visual hook toggle
+  approving the plugin hook control app or native fallback. The installed
+  Stop-hook entry invokes an intentionally no-op command in 0.1.0.
 - `.codex/token-optimizer.json`, created or updated only by
   `token-optimizer config init --project . --yes`
 - `.codex/token-optimizer/`, created only by explicit config, dashboard, or
@@ -47,7 +53,7 @@ These project-local artifacts are removed by:
 
 - `token-optimizer hooks uninstall --project . --yes`
 - `token-optimizer purge --project . --yes`
-- approving the plugin visual hook toggle in the off position
+- approving the plugin hook control app or native fallback in the off position
 
 All persistent paths are documented in `docs/persistence-map.md`.
 
@@ -82,8 +88,9 @@ API key, call OpenAI, or persist reports.
 ## Sensitive Data
 
 Users should avoid passing secrets, credentials, `.env` files, key files, or
-other sensitive material as explicit input unless they have reviewed the command
-behavior. Future persistence features must redact secrets and must be
+other sensitive material as explicit input, including absolute paths outside the
+project, unless they have reviewed the command behavior. Future persistence
+features must redact secrets and must be
 documented before they are implemented.
 
 ## Changes

@@ -23,6 +23,7 @@ Implemented:
 - top-level purge for Token Optimizer-owned state
 - optional git-state summary support
 - Codex plugin with safe usage skill, local visual hook-control MCP server, and optional MCP control surface
+- Claude Code native skill-only plugin package
 - marketplace icon, logo, dark logo, and screenshot assets
 
 Safety notes:
@@ -32,6 +33,8 @@ Safety notes:
 - no raw transcript, raw file-content, or raw tool-output persistence by default
 - Stop hook install apply requires explicit `--yes --experimental`; plugin
   installation does not enable hooks
+- Claude Code plugin installation does not enable hooks, start MCP servers,
+  bundle the Python CLI, or add background behavior
 - the 0.1.0 managed Stop-hook entry invokes an intentionally no-op command and
   carries an `inactive-placeholder-v1` mode marker so future active behavior
   requires fresh consent
@@ -60,3 +63,5 @@ Marketplace readiness:
 - privacy statement and terms files are now present at the advertised paths
 - marketplace presentation assets are present in both the root plugin and the
   repo-local marketplace package
+- Claude Code marketplace metadata and skill-only package validate locally with
+  `claude plugin validate`

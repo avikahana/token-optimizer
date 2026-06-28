@@ -1,0 +1,34 @@
+{
+  "name": "token-optimizer",
+  "owner": {
+    "name": "Avi Kahana"
+  },
+  "description": "Claude Code marketplace catalog for Token Optimizer.",
+  "plugins": [
+    {
+      "name": "token-optimizer",
+      "source": "./plugins/token-optimizer",
+      "displayName": "Token Optimizer",
+      "description": "Local-first context hygiene workflows for AI coding sessions.",
+      "author": {
+        "name": "Avi Kahana"
+      },
+      "homepage": "https://github.com/avikahana/token-optimizer",
+      "repository": "https://github.com/avikahana/token-optimizer",
+      "license": "Apache-2.0",
+      "keywords": [
+        "context",
+        "claude-code",
+        "local-first",
+        "productivity",
+        "tokens"
+      ],
+      "category": "Productivity",
+      "tags": [
+        "context-hygiene",
+        "developer-tools",
+        "local-first"
+      ]
+    }
+  ]
+}

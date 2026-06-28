@@ -1,0 +1,20 @@
+{
+  "name": "token-optimizer",
+  "version": "0.1.0",
+  "description": "Local-first context hygiene workflows for AI coding sessions.",
+  "author": {
+    "name": "Avi Kahana",
+    "url": "https://github.com/avikahana"
+  },
+  "homepage": "https://github.com/avikahana/token-optimizer",
+  "repository": "https://github.com/avikahana/token-optimizer",
+  "license": "Apache-2.0",
+  "keywords": [
+    "context",
+    "claude-code",
+    "local-first",
+    "productivity",
+    "tokens"
+  ],
+  "defaultEnabled": true
+}

@@ -25,6 +25,9 @@ explicit input resolves outside the current or selected project root.
   the installed entry invokes an intentionally no-op command in 0.1.0.
 - The Codex plugin package does not ship global hooks, daemons, services,
   background processes, or networked control surfaces.
+- The Claude Code plugin package is skill-only in 0.1.0. It does not bundle the
+  Python CLI, install hooks, start an MCP server, start a daemon, or add
+  background behavior.
 - Managed project state is constrained to `.codex/token-optimizer.json`,
   `.codex/token-optimizer/`, and managed Token Optimizer hook blocks.
 
@@ -52,7 +55,8 @@ project records. The Python wheel should contain only the installable package,
 distribution metadata, entry point metadata, and license. The source
 distribution should contain source, tests, package metadata, and public docs. The
 Codex plugin package should remain focused: `.codex-plugin/`, `.mcp.json`,
-`mcp/`, `skills/`, and `assets/` only.
+`mcp/`, `skills/`, and `assets/` only. The Claude Code plugin package should
+remain skill-only: `.claude-plugin/`, `skills/`, and its package README only.
 
 Run this before tagging or publishing:
 

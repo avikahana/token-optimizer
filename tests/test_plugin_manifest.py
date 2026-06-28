@@ -73,6 +73,42 @@ class PluginManifestTests(unittest.TestCase):
 
         self.assertTrue((root / "skills/token-optimizer/SKILL.md").is_file())
 
+    def test_claude_marketplace_entry_shape(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        marketplace = json.loads((root / ".claude-plugin/marketplace.json").read_text())
+
+        self.assertEqual(marketplace["name"], "token-optimizer")
+        self.assertEqual(marketplace["owner"]["name"], "Avi Kahana")
+        self.assertEqual(len(marketplace["plugins"]), 1)
+
+        entry = marketplace["plugins"][0]
+        self.assertEqual(entry["name"], "token-optimizer")
+        self.assertEqual(entry["source"], "./plugins/token-optimizer")
+        self.assertEqual(entry["displayName"], "Token Optimizer")
+        self.assertEqual(entry["homepage"], self.REPOSITORY_URL)
+        self.assertEqual(entry["repository"], self.REPOSITORY_URL)
+        self.assertEqual(entry["license"], "Apache-2.0")
+        self.assertNotIn("version", entry)
+
+    def test_claude_plugin_package_is_skill_only(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        plugin_root = root / "plugins/token-optimizer"
+        manifest = json.loads((plugin_root / ".claude-plugin/plugin.json").read_text())
+
+        self.assertEqual(manifest["name"], "token-optimizer")
+        self.assertEqual(manifest["version"], "0.1.0")
+        self.assertEqual(manifest["license"], "Apache-2.0")
+        self.assertEqual(manifest["homepage"], self.REPOSITORY_URL)
+        self.assertEqual(manifest["repository"], self.REPOSITORY_URL)
+        self.assertTrue((plugin_root / "skills/token-optimizer/SKILL.md").is_file())
+        self.assertTrue((plugin_root / "README.md").is_file())
+        self.assertFalse((plugin_root / ".mcp.json").exists())
+        self.assertFalse((plugin_root / "hooks").exists())
+        self.assertFalse((plugin_root / "commands").exists())
+        self.assertNotIn("mcpServers", manifest)
+        self.assertNotIn("hooks", manifest)
+        self.assertNotIn("commands", manifest)
+
     def test_repo_local_marketplace_entry_shape(self) -> None:
         root = Path(__file__).resolve().parents[1]
         marketplace = json.loads(

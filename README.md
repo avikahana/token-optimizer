@@ -377,31 +377,43 @@ token-optimizer summarize README.md SECURITY.md
 
 </details>
 
-<h2 align="center">Plugin Package</h2>
+<h2 align="center">Plugin Packages</h2>
 
 <p align="center">
-  The Codex plugin lives in <code>.codex-plugin/plugin.json</code> with a safe
-  usage skill under <code>skills/token-optimizer/</code> and a local MCP
-  hook-control server with an optional MCP UI resource. It does not install
-  hooks by default, and it has no daemon, networked service, or background
-  behavior.
+  Token Optimizer ships native package surfaces for Codex and Claude Code. The
+  Codex package includes the local MCP hook-control surface. The Claude Code
+  package is skill-only in 0.1.0 and guides safe CLI usage without installing
+  hooks, starting MCP servers, or bundling the Python CLI binary.
 </p>
 
 <table align="center">
   <thead>
     <tr>
-      <th>Included</th>
-      <th>Excluded</th>
+      <th>Surface</th>
+      <th>Path</th>
+      <th>Includes</th>
+      <th>Does Not Include</th>
     </tr>
   </thead>
   <tbody>
-    <tr><td><code>.codex-plugin/</code></td><td>plugin-bundled hooks</td></tr>
-    <tr><td><code>.mcp.json</code>, <code>mcp/</code></td><td>networked control surfaces</td></tr>
-    <tr><td><code>skills/</code></td><td>plugin-bundled hooks</td></tr>
-    <tr><td><code>assets/</code></td><td>daemons, services</td></tr>
-    <tr><td></td><td>scripts, daemons, services</td></tr>
+    <tr><td>Codex</td><td><code>.codex-plugin/</code>, <code>marketplace/plugins/token-optimizer/</code></td><td>Skill, assets, local MCP hook-control server</td><td>Default hook install, daemon, networked service</td></tr>
+    <tr><td>Claude Code</td><td><code>.claude-plugin/marketplace.json</code>, <code>plugins/token-optimizer/</code></td><td>Skill-only native Claude Code plugin</td><td>Hook install, MCP server, daemon, bundled Python CLI</td></tr>
   </tbody>
 </table>
+
+<p align="center"><strong>GitHub install shapes after the repo is public:</strong></p>
+
+```bash
+codex plugin marketplace add avikahana/token-optimizer --sparse marketplace
+codex plugin add token-optimizer@token-optimizer-local
+
+claude plugin marketplace add avikahana/token-optimizer
+claude plugin install token-optimizer@token-optimizer
+```
+
+The CLI can also be installed directly from the GitHub source with a Python
+installer such as `pipx`. The Claude Code plugin expects the CLI to be available
+separately.
 
 <h2 align="center">Release Checks</h2>
 
@@ -415,6 +427,8 @@ PYTHONPATH=src PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -
 python3 scripts/check_release_artifacts.py
 PYTHONPATH=/private/tmp/token-optimizer-validator-pyyaml python3 /path/to/validate_plugin.py .
 PYTHONPATH=/private/tmp/token-optimizer-validator-pyyaml python3 /path/to/validate_plugin.py marketplace/plugins/token-optimizer
+claude plugin validate .
+claude plugin validate ./plugins/token-optimizer
 ```
 
 For local marketplace install checks, use
@@ -430,7 +444,8 @@ For local marketplace install checks, use
   <tbody>
     <tr><td>Wheel</td><td>Installable package, metadata, entry points, license</td></tr>
     <tr><td>Source distribution</td><td>Source, tests, benchmark fixtures, release scripts, public docs</td></tr>
-    <tr><td>Plugin package</td><td><code>.codex-plugin/</code>, <code>.mcp.json</code>, <code>mcp/</code>, <code>skills/</code>, <code>assets/</code> only</td></tr>
+    <tr><td>Codex plugin package</td><td><code>.codex-plugin/</code>, <code>.mcp.json</code>, <code>mcp/</code>, <code>skills/</code>, <code>assets/</code> only</td></tr>
+    <tr><td>Claude Code plugin package</td><td><code>.claude-plugin/</code>, <code>skills/</code>, and package README only</td></tr>
   </tbody>
 </table>
 

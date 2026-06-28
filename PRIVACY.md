@@ -25,6 +25,11 @@ The controls show the dry-run plan first, require explicit approval, and write
 only project-local Token Optimizer hook config. They do not add daemons,
 network calls, telemetry, or background behavior.
 
+The Claude Code plugin is skill-only in 0.1.0. It does not bundle the Python
+CLI, install hooks, start an MCP server, add daemons, make network calls,
+collect telemetry, or add background behavior. It provides workflow guidance for
+using a separately installed `token-optimizer` CLI.
+
 ## Local Files
 
 Token Optimizer commands operate on explicit local inputs. Project scans,

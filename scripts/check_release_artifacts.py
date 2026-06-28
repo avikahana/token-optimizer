@@ -79,6 +79,50 @@ PLUGIN_MIRRORED_FILES = (
     "assets/screenshot-dashboard.png",
 )
 
+CLAUDE_MARKETPLACE_REQUIRED_FILES = (
+    ".claude-plugin/marketplace.json",
+)
+
+CLAUDE_PLUGIN_ALLOWED_PREFIXES = (
+    ".claude-plugin/",
+    "skills/",
+)
+
+CLAUDE_PLUGIN_ALLOWED_FILES = {
+    "README.md",
+}
+
+CLAUDE_PLUGIN_FORBIDDEN_PREFIXES = (
+    "hooks/",
+    "commands/",
+    "agents/",
+    "mcp/",
+    ".mcp.json",
+    "scripts/",
+    "bin/",
+    "launchd/",
+    "services/",
+    "brain/",
+    "chatgpt/",
+    "docs/",
+    "tests/",
+    "src/",
+)
+
+CLAUDE_PLUGIN_FORBIDDEN_SUFFIXES = (
+    ".py",
+    ".sh",
+    ".bash",
+    ".zsh",
+    ".plist",
+)
+
+CLAUDE_PLUGIN_REQUIRED_FILES = (
+    ".claude-plugin/plugin.json",
+    "README.md",
+    "skills/token-optimizer/SKILL.md",
+)
+
 SDIST_REQUIRED = {
     "README.md",
     "LICENSE",
@@ -251,6 +295,37 @@ def check_plugin_package(project: Path) -> None:
         raise SystemExit(f"plugin package files drifted from root plugin files:\n  - {joined}")
 
 
+def check_claude_plugin_package(project: Path) -> None:
+    for relative_path in CLAUDE_MARKETPLACE_REQUIRED_FILES:
+        if not (project / relative_path).is_file():
+            raise SystemExit(f"Claude marketplace is missing required file: {relative_path}")
+
+    plugin_root = project / "plugins/token-optimizer"
+    if not plugin_root.is_dir():
+        raise SystemExit("Claude plugin package is missing: plugins/token-optimizer")
+
+    names = relative_files(plugin_root)
+    assert_no_private(names, "Claude plugin package")
+
+    unexpected = [
+        name
+        for name in names
+        if name not in CLAUDE_PLUGIN_ALLOWED_FILES
+        and not name.startswith(CLAUDE_PLUGIN_ALLOWED_PREFIXES)
+    ]
+    forbidden_prefix = [name for name in names if name.startswith(CLAUDE_PLUGIN_FORBIDDEN_PREFIXES)]
+    forbidden_suffix = [name for name in names if name.endswith(CLAUDE_PLUGIN_FORBIDDEN_SUFFIXES)]
+    if unexpected or forbidden_prefix or forbidden_suffix:
+        details = sorted(set(unexpected + forbidden_prefix + forbidden_suffix))
+        joined = "\n  - ".join(details)
+        raise SystemExit(f"Claude plugin package contains forbidden or unexpected files:\n  - {joined}")
+
+    missing = sorted(name for name in CLAUDE_PLUGIN_REQUIRED_FILES if name not in names)
+    if missing:
+        joined = "\n  - ".join(missing)
+        raise SystemExit(f"Claude plugin package is missing required files:\n  - {joined}")
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Verify Token Optimizer release artifact boundaries.")
     parser.add_argument("--keep-artifacts", action="store_true", help="Keep the temporary build directory and print its path.")
@@ -270,10 +345,12 @@ def main() -> int:
         check_wheel(wheel)
         check_sdist(sdist)
         check_plugin_package(project)
+        check_claude_plugin_package(project)
         print("Release artifact checks passed")
         print(f"wheel: {wheel.name}")
         print(f"sdist: {sdist.name}")
         print("plugin package: marketplace/plugins/token-optimizer")
+        print("Claude plugin package: plugins/token-optimizer")
         if args.keep_artifacts:
             print(f"artifacts kept at: {temp_path}")
         return 0

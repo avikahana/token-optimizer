@@ -415,6 +415,15 @@ The CLI can also be installed directly from the GitHub source with a Python
 installer such as `pipx`. The Claude Code plugin expects the CLI to be available
 separately.
 
+<p align="center"><strong>Detailed install and support docs:</strong></p>
+
+<p align="center">
+  <a href="docs/install-cli.md">CLI Install</a> ·
+  <a href="docs/install-codex.md">Codex Install</a> ·
+  <a href="docs/install-claude-code.md">Claude Code Install</a> ·
+  <a href="docs/provider-support.md">Provider And Surface Support</a>
+</p>
+
 <h2 align="center">Release Checks</h2>
 
 <details>

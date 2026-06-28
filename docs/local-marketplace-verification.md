@@ -16,6 +16,9 @@ plugins/token-optimizer/
 It does not publish the plugin, change repository visibility, create a release
 tag, or install the experimental no-op Stop-hook entry by default.
 
+For user-facing installation notes, see `docs/install-codex.md`,
+`docs/install-claude-code.md`, and `docs/install-cli.md`.
+
 ## Codex Checklist
 
 1. Confirm the local marketplace root.

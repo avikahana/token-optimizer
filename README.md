@@ -35,19 +35,24 @@
   </thead>
   <tbody>
     <tr>
-      <td><a href="#quick-start">Quick Start</a></td>
+      <td><a href="#install">Install</a></td>
       <td><a href="#benchmark-snapshot">Benchmark Snapshot</a></td>
       <td><a href="#command-reference">Command Reference</a></td>
     </tr>
     <tr>
-      <td><a href="#what-it-does">What It Does</a></td>
+      <td><a href="#quick-start">Quick Start</a></td>
       <td><a href="#safety-model">Safety Model</a></td>
       <td><a href="#release-checks">Release Checks</a></td>
     </tr>
     <tr>
-      <td><a href="#how-it-works">How It Works</a></td>
+      <td><a href="#what-it-does">What It Does</a></td>
       <td><a href="#provider-modes">Provider Modes</a></td>
       <td><a href="#more-docs">More Docs</a></td>
+    </tr>
+    <tr>
+      <td><a href="#how-it-works">How It Works</a></td>
+      <td></td>
+      <td></td>
     </tr>
   </tbody>
 </table>
@@ -152,6 +157,39 @@
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/avikahana/token-optimizer/main/assets/screenshot-dashboard.png" alt="Token Optimizer audit dashboard preview" width="920">
+</p>
+
+<h2 align="center">Install</h2>
+
+<p align="center"><strong>With <code>pipx</code> (recommended):</strong></p>
+
+```bash
+pipx install token-optimizer
+```
+
+<p align="center"><strong>With <code>pip</code>:</strong></p>
+
+```bash
+python3 -m pip install token-optimizer
+```
+
+<p align="center"><strong>From a local checkout:</strong></p>
+
+```bash
+python3 -m pip install .
+```
+
+<p align="center"><strong>Verify:</strong></p>
+
+```bash
+token-optimizer doctor
+```
+
+<p align="center">
+  Requires Python 3.11+. Full options in
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/docs/install-cli.md">docs/install-cli.md</a>.
+  Claude Code / Codex plugin install is under
+  <a href="#plugin-packages">Plugin Packages</a>.
 </p>
 
 <h2 align="center">Quick Start</h2>
@@ -401,7 +439,7 @@ token-optimizer summarize README.md SECURITY.md
   </tbody>
 </table>
 
-<p align="center"><strong>GitHub install shapes after the repo is public:</strong></p>
+<p align="center"><strong>Install the plugins from GitHub:</strong></p>
 
 ```bash
 codex plugin marketplace add avikahana/token-optimizer --sparse marketplace
@@ -411,9 +449,8 @@ claude plugin marketplace add avikahana/token-optimizer
 claude plugin install token-optimizer@token-optimizer
 ```
 
-The CLI can also be installed directly from the GitHub source with a Python
-installer such as `pipx`. The Claude Code plugin expects the CLI to be available
-separately.
+The plugins expect the `token-optimizer` CLI to be available separately. Install
+it first as shown in <a href="#install">Install</a>.
 
 <p align="center"><strong>Detailed install and support docs:</strong></p>
 

@@ -17,7 +17,11 @@ const LEGACY_MANAGED_COMMAND = "token-optimizer summarize --hook stop";
 const HOOK_WARNING =
   "Stop-hook entry installation is experimental in 0.1.0 and invokes an intentionally no-op command; use hook control only after reviewing the dry-run plan.";
 const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url));
-const WORKSPACE_ROOT = fs.realpathSync(process.cwd());
+// The containment boundary for every write. Hosts do not all honor the
+// `cwd` field in .mcp.json, so an explicit env override comes first.
+const WORKSPACE_ROOT = fs.realpathSync(
+  process.env.TOKEN_OPTIMIZER_WORKSPACE_ROOT ?? process.cwd(),
+);
 const WIDGET_URI = "ui://token-optimizer/hook-control.html";
 const WIDGET_MIME_TYPE = "text/html;profile=mcp-app";
 const REQUEST_TIMEOUT_MS = 30000;
@@ -887,6 +891,8 @@ async function handleRequest(message) {
     sendError(id, JsonRpcError.METHOD_NOT_FOUND, `Method not found: ${method}`);
   }
 }
+
+logProtocolWarning(`workspace root: ${WORKSPACE_ROOT}`);
 
 const lines = readline.createInterface({
   input: process.stdin,

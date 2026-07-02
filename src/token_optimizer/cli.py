@@ -68,6 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands = parser.add_subparsers(dest="command")
 
     doctor = subcommands.add_parser("doctor", help="Show current Token Optimizer setup status.")
+    doctor.add_argument("--project", default=".", help="Project path. Defaults to cwd.")
     doctor.add_argument("--json", action="store_true", help="Render the report as JSON.")
     audit = subcommands.add_parser("audit", help="Inspect project context overhead.")
     audit.add_argument("--project", default=".", help="Project path. Defaults to cwd.")
@@ -190,7 +191,6 @@ def build_parser() -> argparse.ArgumentParser:
     hooks_subcommands = hooks.add_subparsers(dest="hooks_command")
     hooks_install = hooks_subcommands.add_parser("install", help="Plan hook installation.")
     hooks_install.add_argument("--project", default=".", help="Project path. Defaults to cwd.")
-    hooks_install.add_argument("--profile", default="quiet", help="Hook profile.")
     hooks_install.add_argument(
         "--dry-run",
         action="store_true",
@@ -299,7 +299,11 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         return 0
     if args.command == "doctor":
-        report = build_report()
+        try:
+            report = build_report(args.project)
+        except (OSError, ValueError) as exc:
+            print(f"doctor: {exc}")
+            return 1
         print(report_to_json(report) if args.json else format_report(report))
         return 0
     if args.command == "audit":

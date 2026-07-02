@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import fcntl
 import json
+import os
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -10,105 +13,16 @@ from token_optimizer.hooks import (
     HookConfigError,
     MANAGED_COMMAND,
     apply_hook_file_change,
-    build_install_plan,
     file_change_plan_to_json,
     format_file_change_plan,
-    format_plan,
     merge_managed_block,
     plan_hook_install_file_change,
     plan_hook_uninstall_file_change,
     parse_hooks_json,
-    plan_to_json,
     remove_managed_blocks,
     render_hooks_json,
 )
 from token_optimizer.paths import UnsafePathError
-
-GOLDEN_DIR = Path(__file__).parent / "golden"
-
-
-class HookPlanTests(unittest.TestCase):
-    def test_quiet_install_plan_is_project_local_and_dry_run(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            project = Path(directory)
-
-            plan = build_install_plan(project, profile="quiet", dry_run=True)
-
-            self.assertEqual(plan.project_path, project.resolve())
-            self.assertEqual(plan.hooks_path, project.resolve() / ".codex/hooks.json")
-            self.assertEqual(plan.profile, "quiet")
-            self.assertTrue(plan.dry_run)
-            self.assertEqual(plan.block["_tokenOptimizer"]["marker"], MANAGED_MARKER)
-            self.assertIn("Stop", plan.block)
-            command = plan.block["Stop"][0]["hooks"][0]["command"]
-            self.assertEqual(command, MANAGED_COMMAND)
-            self.assertEqual(
-                plan.block["_tokenOptimizer"]["behavior"],
-                "inactive-placeholder-v1",
-            )
-            self.assertTrue(plan.block["_tokenOptimizer"]["requiresFreshConsentForActiveBehavior"])
-
-    def test_install_plan_warns_when_hooks_file_exists(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            project = Path(directory)
-            hooks = project / ".codex/hooks.json"
-            hooks.parent.mkdir()
-            hooks.write_text("{}", encoding="utf-8")
-
-            plan = build_install_plan(project)
-
-            self.assertTrue(any("Existing hooks file found" in item for item in plan.warnings))
-
-    def test_install_plan_rejects_hooks_symlink(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            project = Path(directory)
-            hooks = project / ".codex/hooks.json"
-            hooks.parent.mkdir()
-            target = project / "target-hooks.json"
-            target.write_text("{}", encoding="utf-8")
-            hooks.symlink_to(target)
-
-            with self.assertRaises(UnsafePathError):
-                build_install_plan(project)
-
-    def test_format_plan_includes_planned_block(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            rendered = format_plan(build_install_plan(Path(directory)))
-
-            self.assertIn("Token Optimizer Hook Install Plan", rendered)
-            self.assertIn("Planned managed block:", rendered)
-            self.assertIn(MANAGED_MARKER, rendered)
-
-    def test_plan_to_json_is_machine_readable(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            payload = json.loads(plan_to_json(build_install_plan(Path(directory))))
-
-        self.assertEqual(payload["profile"], "quiet")
-        self.assertTrue(payload["dryRun"])
-        self.assertFalse(payload["experimental"])
-        self.assertEqual(payload["managedMarker"], MANAGED_MARKER)
-
-    def test_dry_run_human_output_matches_golden(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            project = Path(directory)
-
-            rendered = format_plan(build_install_plan(project))
-
-            self.assertEqual(
-                _normalize_project_path(rendered, project),
-                _read_golden("hooks_install_dry_run.txt"),
-            )
-
-    def test_dry_run_json_output_matches_golden(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            project = Path(directory)
-
-            rendered = plan_to_json(build_install_plan(project))
-
-            self.assertEqual(
-                _normalize_project_path(rendered, project),
-                _read_golden("hooks_install_dry_run.json"),
-            )
 
 
 class HookMergeTests(unittest.TestCase):
@@ -171,6 +85,44 @@ class HookMergeTests(unittest.TestCase):
         with self.assertRaises(HookConfigError):
             merge_managed_block({"_tokenOptimizer": {"owner": "someone else"}})
 
+    def test_merge_does_not_duplicate_managed_command_without_metadata(self) -> None:
+        existing = {
+            "Stop": [
+                {
+                    "matcher": "*",
+                    "hooks": [{"type": "command", "command": MANAGED_COMMAND}],
+                }
+            ]
+        }
+
+        merged = merge_managed_block(existing)
+
+        commands = [
+            hook["command"] for entry in merged["Stop"] for hook in entry["hooks"]
+        ]
+        self.assertEqual(commands.count(MANAGED_COMMAND), 1)
+
+    def test_merge_keeps_user_command_sharing_entry_with_managed_command(self) -> None:
+        existing = {
+            "Stop": [
+                {
+                    "matcher": "*",
+                    "hooks": [
+                        {"type": "command", "command": "echo user"},
+                        {"type": "command", "command": MANAGED_COMMAND},
+                    ],
+                }
+            ]
+        }
+
+        merged = merge_managed_block(existing)
+
+        commands = [
+            hook["command"] for entry in merged["Stop"] for hook in entry["hooks"]
+        ]
+        self.assertIn("echo user", commands)
+        self.assertEqual(commands.count(MANAGED_COMMAND), 1)
+
 
 class HookUninstallTests(unittest.TestCase):
     def test_remove_managed_blocks_preserves_user_hooks(self) -> None:
@@ -214,6 +166,17 @@ class HookUninstallTests(unittest.TestCase):
         uninstalled = remove_managed_blocks(existing)
 
         self.assertEqual(uninstalled, existing)
+
+    def test_remove_managed_blocks_keeps_user_hook_inside_managed_entry(self) -> None:
+        existing = merge_managed_block(None)
+        existing["Stop"][0]["hooks"].append({"type": "command", "command": "echo user"})
+
+        uninstalled = remove_managed_blocks(existing)
+
+        self.assertNotIn("_tokenOptimizer", uninstalled)
+        self.assertEqual(len(uninstalled["Stop"]), 1)
+        commands = [hook["command"] for hook in uninstalled["Stop"][0]["hooks"]]
+        self.assertEqual(commands, ["echo user"])
 
     def test_remove_managed_blocks_is_stable_when_rendered_twice(self) -> None:
         merged = merge_managed_block({"Stop": [{"hooks": [{"command": "echo user"}]}]})
@@ -622,6 +585,40 @@ class HookFileApplyTests(unittest.TestCase):
                 apply_hook_file_change(plan)
             self.assertFalse((outside / "hooks.json").exists())
 
+    def test_apply_blocks_on_project_lock_and_rereads_before_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            plan = plan_hook_install_file_change(project, experimental=True)
+
+            lock_fd = os.open(project.resolve(), os.O_RDONLY)
+            fcntl.flock(lock_fd, fcntl.LOCK_EX)
+            errors: list[HookConfigError] = []
+
+            def run_apply() -> None:
+                try:
+                    apply_hook_file_change(plan)
+                except HookConfigError as exc:
+                    errors.append(exc)
+
+            thread = threading.Thread(target=run_apply)
+            try:
+                thread.start()
+                thread.join(timeout=0.5)
+                self.assertTrue(thread.is_alive(), "apply must block while the lock is held")
+
+                hooks = project / ".codex/hooks.json"
+                hooks.parent.mkdir()
+                hooks.write_text("{}", encoding="utf-8")
+            finally:
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                os.close(lock_fd)
+            thread.join(timeout=5)
+
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(len(errors), 1)
+            self.assertIn("changed since plan was created", str(errors[0]))
+            self.assertEqual(hooks.read_text(encoding="utf-8"), "{}")
+
     def test_apply_rejects_stale_hooks_plan(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
@@ -633,14 +630,6 @@ class HookFileApplyTests(unittest.TestCase):
             with self.assertRaises(HookConfigError):
                 apply_hook_file_change(plan)
             self.assertEqual(hooks.read_text(encoding="utf-8"), "{}")
-
-
-def _read_golden(name: str) -> str:
-    return (GOLDEN_DIR / name).read_text(encoding="utf-8").removesuffix("\n")
-
-
-def _normalize_project_path(rendered: str, project: Path) -> str:
-    return rendered.replace(str(project.resolve()), "<PROJECT>")
 
 
 def _fake_file_change_plan(

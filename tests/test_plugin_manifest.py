@@ -184,6 +184,49 @@ class PluginManifestTests(unittest.TestCase):
                     (plugin_root / relative_path).read_bytes(),
                 )
 
+    def test_skill_frontmatter_name_matches_directory_in_every_copy(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        for relative_path in (
+            "skills/token-optimizer/SKILL.md",
+            "plugins/token-optimizer/skills/token-optimizer/SKILL.md",
+            "marketplace/plugins/token-optimizer/skills/token-optimizer/SKILL.md",
+        ):
+            with self.subTest(relative_path=relative_path):
+                text = (root / relative_path).read_text(encoding="utf-8")
+                self.assertTrue(
+                    text.startswith("---\nname: token-optimizer\n"),
+                    f"{relative_path} frontmatter name must be token-optimizer",
+                )
+
+    def test_claude_plugin_manifest_has_no_undocumented_fields(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        manifest = json.loads(
+            (root / "plugins/token-optimizer/.claude-plugin/plugin.json").read_text()
+        )
+
+        self.assertNotIn("defaultEnabled", manifest)
+
+    def test_claude_plugin_skill_shares_core_safety_rules(self) -> None:
+        # The plugins/ (Claude Code) skill copy is intentionally worded for
+        # Claude Code and is not byte-identical to the root skill, so pin the
+        # shared safety invariants instead of full file equality.
+        root = Path(__file__).resolve().parents[1]
+        text = (
+            root / "plugins/token-optimizer/skills/token-optimizer/SKILL.md"
+        ).read_text(encoding="utf-8")
+        normalized = " ".join(text.split())
+        invariants = (
+            "Start with read-only commands.",
+            "Do not start daemons, live dashboards, network calls, or keepwarm behavior.",
+            "no current host (Claude Code or Codex CLI) reads or executes entries in this file",
+            "requires a new install flow and fresh consent",
+            "Do not install hooks unless the user explicitly asks for the advanced "
+            "experimental Stop hook and reviews the dry-run plan.",
+        )
+        for invariant in invariants:
+            with self.subTest(invariant=invariant):
+                self.assertIn(invariant, normalized)
+
     def test_plugin_mcp_config_points_to_local_server(self) -> None:
         root = Path(__file__).resolve().parents[1]
         config = json.loads((root / ".mcp.json").read_text())

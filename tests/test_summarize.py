@@ -119,5 +119,22 @@ class SummaryTests(unittest.TestCase):
         self.assertIn("abc123 Commit", rendered)
 
 
+
+class SummaryLimitTests(unittest.TestCase):
+    def test_rejects_oversized_input_file(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory).resolve() / "big.md"
+            path.write_text("# Big\n", encoding="utf-8")
+
+            with patch(
+                "token_optimizer.summarize.require_readable_size",
+                side_effect=ValueError("refusing to read files over 10485760 bytes"),
+            ):
+                with self.assertRaises(SummaryError) as raised:
+                    build_summary([str(path)])
+
+            self.assertIn("refusing to read", str(raised.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -522,5 +522,24 @@ class CliTests(unittest.TestCase):
         self.assertIn("purge: boom", output.getvalue())
 
 
+
+class DoctorProjectFlagTests(unittest.TestCase):
+    def test_doctor_reports_on_explicit_project_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory).resolve()
+            hooks = project / ".codex/hooks.json"
+            hooks.parent.mkdir()
+            hooks.write_text(render_hooks_json(merge_managed_block(None)), encoding="utf-8")
+            output = io.StringIO()
+
+            with redirect_stdout(output):
+                status = main(["doctor", "--project", str(project), "--json"])
+
+            payload = json.loads(output.getvalue())
+            self.assertEqual(status, 0)
+            self.assertEqual(payload["project"], str(project))
+            self.assertTrue(payload["managedHooksPresent"])
+
+
 if __name__ == "__main__":
     unittest.main()

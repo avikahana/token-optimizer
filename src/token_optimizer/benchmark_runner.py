@@ -12,6 +12,7 @@ from token_optimizer.estimator import (
     STATIC_MEASUREMENT_LABEL,
     estimate_static_tokens,
 )
+from token_optimizer.limits import require_readable_size
 from token_optimizer.paths import reject_symlink
 
 
@@ -46,7 +47,7 @@ class BenchmarkReport:
     baseline_estimate: int
     optimized_estimate: int
     reduction: int
-    reduction_percent: float
+    reduction_percent: float | None
     preservation_checks: tuple[PreservationCheck, ...]
     limitations: tuple[str, ...]
     baseline_files: tuple[BenchmarkFileEstimate, ...]
@@ -73,9 +74,7 @@ def build_static_benchmark_report(fixture_path: str | Path) -> BenchmarkReport:
     baseline_estimate = sum(item.static_estimate for item in baseline_files)
     optimized_estimate = sum(item.static_estimate for item in optimized_files)
     reduction = baseline_estimate - optimized_estimate
-    reduction_percent = 0.0
-    if baseline_estimate:
-        reduction_percent = round((reduction / baseline_estimate) * 100, 2)
+    reduction_percent = reduction_percent_or_none(reduction, baseline_estimate)
 
     checks = _preservation_checks(must_preserve, optimized_dir)
     return BenchmarkReport(
@@ -104,7 +103,7 @@ def format_benchmark_report(report: BenchmarkReport) -> str:
         f"Baseline estimate: {report.baseline_estimate}",
         f"Optimized estimate: {report.optimized_estimate}",
         f"Reduction: {report.reduction}",
-        f"Reduction percent: {report.reduction_percent:.2f}%",
+        "Reduction percent: " + format_reduction_percent(report.reduction_percent),
         "",
         "Preservation checks:",
     ]
@@ -193,6 +192,30 @@ def required_fixture_file(path: Path, label: str) -> Path:
     return path
 
 
+def reduction_percent_or_none(reduction: int, baseline_tokens: int) -> float | None:
+    """Compute a reduction percentage, or None when the baseline is zero."""
+
+    if not baseline_tokens:
+        return None
+    return round((reduction / baseline_tokens) * 100, 2)
+
+
+def format_reduction_percent(reduction_percent: float | None) -> str:
+    """Render a reduction percentage for humans, with n/a for a zero baseline."""
+
+    if reduction_percent is None:
+        return "n/a (baseline is zero)"
+    return f"{reduction_percent:.2f}%"
+
+
+def require_token_count(value: Any, label: str) -> int:
+    """Validate a provider-reported token count as a non-negative real int."""
+
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise BenchmarkRunnerError(f"{label} token count must be a non-negative integer")
+    return value
+
+
 def fixture_side_text(fixture: Path, side: str) -> str:
     """Read one fixture side as labeled text chunks."""
 
@@ -204,7 +227,7 @@ def fixture_side_text(fixture: Path, side: str) -> str:
         if not path.is_file():
             continue
         relative = path.relative_to(fixture).as_posix()
-        chunks.append(f"## {relative}\n\n{path.read_text(encoding='utf-8')}")
+        chunks.append(f"## {relative}\n\n{_read_fixture_file(path)}")
     if not chunks:
         raise BenchmarkRunnerError(f"fixture side has no files: {directory}")
     return "\n\n".join(chunks)
@@ -225,7 +248,7 @@ def must_preserve_facts(path: Path) -> tuple[str, ...]:
     """Read required facts from a must-preserve file."""
 
     facts: list[str] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in _read_fixture_file(path).splitlines():
         stripped = line.strip()
         if stripped.startswith("- "):
             facts.append(stripped[2:])
@@ -271,8 +294,19 @@ def _read_text_files(directory: Path) -> str:
         if path.is_symlink():
             raise BenchmarkRunnerError(f"fixture contains symlink: {path}")
         if path.is_file():
-            chunks.append(path.read_text(encoding="utf-8"))
+            chunks.append(_read_fixture_file(path))
     return "\n".join(chunks)
+
+
+def _read_fixture_file(path: Path) -> str:
+    try:
+        require_readable_size(path)
+    except ValueError as error:
+        raise BenchmarkRunnerError(str(error)) from error
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as error:
+        raise BenchmarkRunnerError(f"fixture file is not UTF-8: {path}") from error
 
 
 def _format_file_estimates(files: tuple[BenchmarkFileEstimate, ...]) -> list[str]:

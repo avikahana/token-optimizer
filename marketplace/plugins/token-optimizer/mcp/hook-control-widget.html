@@ -2,6 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       :root {
@@ -379,17 +383,23 @@
         statusEl.classList.toggle("on", Boolean(state.enabled));
         statusTextEl.textContent = state.enabled ? "Installed" : "Not installed";
         projectPathEl.textContent = state.projectPath;
+        // Host-forwarded payloads (for example a cancelled toggle) may carry
+        // no plans; render placeholders instead of throwing mid-render.
         const plan = selectedPlan();
         summaryEl.innerHTML = "";
+        const digest =
+          plan && typeof plan.planDigest === "string" && plan.planDigest
+            ? plan.planDigest.slice(0, 12)
+            : "n/a";
         const items = [
           `Target file: .codex/hooks.json`,
-          `Action: ${plan.action}`,
-          plan.wouldCreate ? "Result: create the Token Optimizer managed hook block." :
-            plan.wouldUpdate ? "Result: update only the Token Optimizer managed hook block." :
-            plan.wouldRemove ? "Result: remove only Token Optimizer managed hook content." :
+          `Action: ${plan?.action ?? "unknown"}`,
+          plan?.wouldCreate ? "Result: create the Token Optimizer managed hook block." :
+            plan?.wouldUpdate ? "Result: update only the Token Optimizer managed hook block." :
+            plan?.wouldRemove ? "Result: remove only Token Optimizer managed hook content." :
             "Result: no file change.",
           `Command: ${state.managedCommand}`,
-          `Review ID: ${plan.planDigest.slice(0, 12)}`,
+          `Review ID: ${digest}`,
         ];
         for (const item of items) {
           const li = document.createElement("li");

@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import copy
+import fcntl
 import json
+import os
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from token_optimizer.doctor import HOOKS_RELATIVE_PATH, MANAGED_MARKER
 from token_optimizer.paths import (
@@ -16,7 +19,6 @@ from token_optimizer.paths import (
     resolve_project_path,
 )
 
-SUPPORTED_PROFILES = ("quiet",)
 INACTIVE_PLACEHOLDER_HOOK_MODE = "inactive-placeholder-v1"
 MANAGED_COMMAND = (
     "token-optimizer summarize --hook stop "
@@ -27,17 +29,6 @@ EXPERIMENTAL_HOOK_WARNING = (
     "Stop-hook entry installation is experimental and invokes a no-op command in 0.1.0; "
     "use --experimental with --yes only after reviewing the dry-run plan."
 )
-
-
-@dataclass(frozen=True)
-class HookPlan:
-    project_path: Path
-    hooks_path: Path
-    profile: str
-    dry_run: bool
-    experimental: bool
-    block: dict[str, Any]
-    warnings: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -58,75 +49,6 @@ class HookFileChangePlan:
 
 class HookConfigError(ValueError):
     """Raised when an in-memory hooks document cannot be safely handled."""
-
-
-def build_install_plan(
-    project_path: Path | str | None = None,
-    *,
-    profile: str = "quiet",
-    dry_run: bool = True,
-    experimental: bool = False,
-) -> HookPlan:
-    """Build a project-local hook install plan without writing files."""
-
-    if profile not in SUPPORTED_PROFILES:
-        supported = ", ".join(SUPPORTED_PROFILES)
-        raise ValueError(f"unsupported profile {profile!r}; supported profiles: {supported}")
-    project = resolve_project_path(project_path)
-    hooks_path = _owned_hooks_path(project)
-    if hooks_path.exists() and not hooks_path.is_file():
-        raise UnsafePathError(f"hooks path exists but is not a file: {hooks_path}")
-    block = _quiet_hook_block()
-    warnings = tuple(_warnings(hooks_path, experimental=experimental))
-    return HookPlan(
-        project_path=project,
-        hooks_path=hooks_path,
-        profile=profile,
-        dry_run=dry_run,
-        experimental=experimental,
-        block=block,
-        warnings=warnings,
-    )
-
-
-def format_plan(plan: HookPlan) -> str:
-    """Render a hook plan for humans."""
-
-    lines = [
-        "Token Optimizer Hook Install Plan",
-        f"Project: {plan.project_path}",
-        f"Hooks path: {plan.hooks_path}",
-        f"Profile: {plan.profile}",
-        f"Dry run: {'yes' if plan.dry_run else 'no'}",
-        f"Experimental: {_yes_no(plan.experimental)}",
-        "",
-        "Planned managed block:",
-        json.dumps(plan.block, indent=2, sort_keys=True),
-    ]
-    if plan.warnings:
-        lines.append("")
-        lines.append("Warnings:")
-        lines.extend(f"- {warning}" for warning in plan.warnings)
-    else:
-        lines.append("")
-        lines.append("Warnings: none")
-    return "\n".join(lines)
-
-
-def plan_to_json(plan: HookPlan) -> str:
-    """Render a hook plan as JSON."""
-
-    payload = {
-        "project": str(plan.project_path),
-        "hooksPath": str(plan.hooks_path),
-        "profile": plan.profile,
-        "dryRun": plan.dry_run,
-        "experimental": plan.experimental,
-        "managedMarker": MANAGED_MARKER,
-        "managedBlock": plan.block,
-        "warnings": list(plan.warnings),
-    }
-    return json.dumps(payload, indent=2, sort_keys=True)
 
 
 def format_file_change_plan(plan: HookFileChangePlan, *, dry_run: bool = True) -> str:
@@ -189,33 +111,31 @@ def apply_hook_file_change(plan: HookFileChangePlan) -> HookFileChangePlan:
         raise UnsafePathError(f"hooks path does not match project-owned path: {plan.hooks_path}")
     if plan.operation == "install" and not plan.experimental:
         raise HookConfigError("hook install apply requires experimental consent")
-    before = _read_existing_hooks(hooks_path)
-    if before != plan.before:
-        raise HookConfigError("hooks file changed since plan was created")
-    if plan.action in ("create", "update"):
-        if plan.after is None:
-            raise HookConfigError(f"{plan.action} plan is missing output")
-        if hooks_path.exists() and not hooks_path.is_file():
-            raise UnsafePathError(f"hooks path exists but is not a file: {hooks_path}")
-        hooks_path.parent.mkdir(parents=True, exist_ok=True)
-        hooks_path = _owned_hooks_path(plan.project_path)
-        if plan.hooks_path != hooks_path:
-            raise UnsafePathError(f"hooks path does not match project-owned path: {plan.hooks_path}")
-        if hooks_path.exists() and not hooks_path.is_file():
-            raise UnsafePathError(f"hooks path exists but is not a file: {hooks_path}")
-        atomic_write_text(hooks_path, plan.after)
-    elif plan.action == "remove":
-        hooks_path = _owned_hooks_path(plan.project_path)
-        if plan.hooks_path != hooks_path:
-            raise UnsafePathError(f"hooks path does not match project-owned path: {plan.hooks_path}")
-        if hooks_path.exists():
-            if not hooks_path.is_file():
+    with _exclusive_apply_lock(plan.project_path):
+        before = _read_existing_hooks(hooks_path)
+        if before != plan.before:
+            raise HookConfigError("hooks file changed since plan was created")
+        if plan.action in ("create", "update"):
+            if plan.after is None:
+                raise HookConfigError(f"{plan.action} plan is missing output")
+            hooks_path.parent.mkdir(parents=True, exist_ok=True)
+            hooks_path = _owned_hooks_path(plan.project_path)
+            if plan.hooks_path != hooks_path:
+                raise UnsafePathError(
+                    f"hooks path does not match project-owned path: {plan.hooks_path}"
+                )
+            if hooks_path.exists() and not hooks_path.is_file():
                 raise UnsafePathError(f"hooks path exists but is not a file: {hooks_path}")
-            hooks_path.unlink()
-    elif plan.action == "unchanged":
-        return plan
-    else:
-        raise HookConfigError(f"unsupported hook file action: {plan.action}")
+            atomic_write_text(hooks_path, plan.after)
+        elif plan.action == "remove":
+            if hooks_path.exists():
+                if not hooks_path.is_file():
+                    raise UnsafePathError(f"hooks path exists but is not a file: {hooks_path}")
+                hooks_path.unlink()
+        elif plan.action == "unchanged":
+            return plan
+        else:
+            raise HookConfigError(f"unsupported hook file action: {plan.action}")
     return plan
 
 
@@ -317,6 +237,9 @@ def merge_managed_block(
     if metadata is not None and not _is_managed_metadata(metadata):
         raise HookConfigError("existing hooks document has foreign _tokenOptimizer metadata")
     document = remove_managed_blocks(document)
+    # Also strip managed commands that lost their metadata (hand edits, older
+    # versions), so a reinstall cannot leave the hook entry in twice.
+    document = _strip_managed_commands(document)
     document["_tokenOptimizer"] = block["_tokenOptimizer"]
     for event, entries in block.items():
         if event == "_tokenOptimizer":
@@ -338,16 +261,42 @@ def remove_managed_blocks(existing: dict[str, Any] | None) -> dict[str, Any]:
     if not _is_managed_metadata(metadata):
         return document
     document.pop("_tokenOptimizer", None)
+    return _strip_managed_commands(document)
+
+
+def _strip_managed_commands(document: dict[str, Any]) -> dict[str, Any]:
+    """Remove managed commands from hook entries, keeping user hooks in place."""
+
     for event in tuple(document.keys()):
         entries = document[event]
         if not isinstance(entries, list):
             continue
-        remaining = [entry for entry in entries if not _is_managed_entry(entry)]
+        remaining = []
+        for entry in entries:
+            stripped = _without_managed_commands(entry)
+            if stripped is not None:
+                remaining.append(stripped)
         if remaining:
             document[event] = remaining
         else:
             document.pop(event)
     return document
+
+
+def _without_managed_commands(entry: Any) -> Any | None:
+    """Drop managed commands from one hook entry; None when nothing user-owned remains."""
+
+    if not isinstance(entry, dict):
+        return entry
+    hooks = entry.get("hooks")
+    if not isinstance(hooks, list):
+        return entry
+    remaining = [hook for hook in hooks if not _is_managed_command(hook)]
+    if remaining == hooks:
+        return entry
+    if not remaining:
+        return None
+    return {**entry, "hooks": remaining}
 
 
 def _quiet_hook_block() -> dict[str, Any]:
@@ -459,13 +408,19 @@ def _is_managed_metadata(value: Any) -> bool:
     return isinstance(value, dict) and value.get("marker") == MANAGED_MARKER
 
 
-def _is_managed_entry(entry: Any) -> bool:
-    if not isinstance(entry, dict):
-        return False
-    hooks = entry.get("hooks")
-    if not isinstance(hooks, list):
-        return False
-    return any(_is_managed_command(hook) for hook in hooks)
+@contextmanager
+def _exclusive_apply_lock(project_path: Path) -> Iterator[None]:
+    """Serialize the apply read-check-write window across concurrent invocations.
+
+    Locks the project directory itself so no extra lock file is persisted.
+    """
+
+    fd = os.open(project_path, os.O_RDONLY)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        os.close(fd)
 
 
 def _is_managed_command(hook: Any) -> bool:

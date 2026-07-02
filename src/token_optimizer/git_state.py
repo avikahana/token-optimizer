@@ -34,7 +34,12 @@ def build_git_state_summary(project_path: str | Path | None = None) -> GitStateS
     branch_lines = _run_git(project, "status", "--short", "--branch")
     if not branch_lines:
         raise GitStateError("git status returned no output")
-    commits = _run_git(project, "log", "--oneline", "-5")
+    try:
+        commits = _run_git(project, "log", "--oneline", "-5")
+    except GitStateError:
+        # A repo with no commits yet makes `git log` exit 128; report the
+        # branch/status with commits marked unavailable instead of failing.
+        commits = []
     return GitStateSummary(
         project_path=project,
         branch=branch_lines[0],

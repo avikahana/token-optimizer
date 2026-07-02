@@ -1,5 +1,5 @@
 ---
-name: Token Optimizer
+name: token-optimizer
 description: Use when the user wants to inspect, reduce, or plan around AI coding-session context waste with Token Optimizer; run safe read-only commands first and avoid hooks unless the user explicitly asks for them.
 version: 0.1.0
 ---

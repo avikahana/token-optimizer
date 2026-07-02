@@ -41,6 +41,28 @@ class GitStateTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     build_git_state_summary(project)
 
+    def test_fresh_repo_without_commits_reports_commits_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+
+            def fake_run(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+                if command[-3:] == ("status", "--short", "--branch"):
+                    return subprocess.CompletedProcess(command, 0, "## No commits yet on main\n", "")
+                if command[-3:] == ("log", "--oneline", "-5"):
+                    return subprocess.CompletedProcess(
+                        command,
+                        128,
+                        "",
+                        "fatal: your current branch 'main' does not have any commits yet",
+                    )
+                return subprocess.CompletedProcess(command, 1, "", "unexpected")
+
+            with patch("subprocess.run", side_effect=fake_run):
+                summary = build_git_state_summary(project)
+
+            self.assertEqual(summary.recent_commits, ())
+            self.assertIn("- unavailable", format_git_state_summary(summary))
+
     def test_git_timeout_raises_git_state_error(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)

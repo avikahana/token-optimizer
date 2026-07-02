@@ -34,7 +34,7 @@ class DoctorReport:
     warnings: tuple[str, ...]
 
 
-def build_report(project_path: Path | None = None) -> DoctorReport:
+def build_report(project_path: Path | str | None = None) -> DoctorReport:
     """Build a read-only DoctorReport for the selected project path."""
 
     project = resolve_project_path(project_path)

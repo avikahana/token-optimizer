@@ -64,6 +64,12 @@ Optimizer-managed content in project-local `.codex/hooks.json`, and only after
 explicit approval. The installed 0.1.0 Stop-hook entry invokes an intentionally
 no-op command.
 
+The MCP server refuses to write outside its workspace root. By default the
+root is the server process working directory (the `cwd` in `.mcp.json`); set
+the `TOKEN_OPTIMIZER_WORKSPACE_ROOT` environment variable to pin it explicitly
+when the host does not honor `cwd`. The server logs the resolved root to
+stderr at startup.
+
 Use the CLI directly for ordinary read-only checks:
 
 ```bash

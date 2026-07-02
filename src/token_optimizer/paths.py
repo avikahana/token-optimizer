@@ -53,7 +53,6 @@ def resolve_owned_path(project: Path, relative_path: Path | str, label: str) -> 
     raw = Path(relative_path)
     if raw.is_absolute():
         raise UnsafePathError(f"path must be project-relative: {raw}")
-    unresolved = project / raw
     reject_symlink_components(project, raw, label)
     return resolve_under_project(project, raw)
 

@@ -14,7 +14,10 @@ from token_optimizer.benchmark_runner import (
     BenchmarkRunnerError,
     PreservationCheck,
     fixture_side_text,
+    format_reduction_percent,
     preservation_checks_for_fixture,
+    reduction_percent_or_none,
+    require_token_count,
     resolve_benchmark_fixture,
 )
 
@@ -49,7 +52,7 @@ class AnthropicCountReport:
     baseline_input_tokens: int
     optimized_input_tokens: int
     reduction: int
-    reduction_percent: float
+    reduction_percent: float | None
     preservation_checks: tuple[PreservationCheck, ...]
     limitations: tuple[str, ...]
 
@@ -94,12 +97,10 @@ def build_anthropic_count_report(
 
     fixture = _resolve_fixture(fixture_path)
     baseline, optimized = build_anthropic_payloads(fixture, model=model)
-    baseline_tokens = _count_input_tokens(count_tokens(baseline.payload))
-    optimized_tokens = _count_input_tokens(count_tokens(optimized.payload))
+    baseline_tokens = _count_input_tokens(count_tokens(baseline.payload), "baseline")
+    optimized_tokens = _count_input_tokens(count_tokens(optimized.payload), "optimized")
     reduction = baseline_tokens - optimized_tokens
-    reduction_percent = 0.0
-    if baseline_tokens:
-        reduction_percent = round((reduction / baseline_tokens) * 100, 2)
+    reduction_percent = reduction_percent_or_none(reduction, baseline_tokens)
     return AnthropicCountReport(
         provider=ANTHROPIC_PROVIDER,
         model=model,
@@ -155,7 +156,7 @@ def format_anthropic_count_report(report: AnthropicCountReport) -> str:
         f"Baseline input tokens: {report.baseline_input_tokens}",
         f"Optimized input tokens: {report.optimized_input_tokens}",
         f"Reduction: {report.reduction}",
-        f"Reduction percent: {report.reduction_percent:.2f}%",
+        "Reduction percent: " + format_reduction_percent(report.reduction_percent),
         "",
         "Preservation checks:",
     ]
@@ -221,16 +222,16 @@ def _preservation_checks(fixture: Path) -> tuple[PreservationCheck, ...]:
     return preservation_checks_for_fixture(fixture)
 
 
-def _count_input_tokens(value: object) -> int:
-    if isinstance(value, int):
-        return value
+def _count_input_tokens(value: object, label: str) -> int:
+    if isinstance(value, int) and not isinstance(value, bool):
+        return require_token_count(value, label)
     if isinstance(value, Mapping):
         input_tokens = value.get("input_tokens")
         if isinstance(input_tokens, int):
-            return input_tokens
+            return require_token_count(input_tokens, label)
     input_tokens = getattr(value, "input_tokens", None)
     if isinstance(input_tokens, int):
-        return input_tokens
+        return require_token_count(input_tokens, label)
     raise BenchmarkRunnerError("count-token function must return int or input_tokens mapping")
 
 

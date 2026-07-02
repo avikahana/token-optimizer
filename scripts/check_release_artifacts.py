@@ -22,6 +22,14 @@ PRIVATE_NAMES = {
     ".env.local",
 }
 
+# Substring/prefix patterns matched against lowercased basenames, so
+# .env.production, .envrc, and credentials.json cannot slip through.
+PRIVATE_NAME_PATTERNS = (
+    ".env",
+    "credentials",
+    "secret",
+)
+
 PRIVATE_SUFFIXES = (
     "__pycache__/",
 )
@@ -173,13 +181,18 @@ def relative_files(root: Path) -> list[str]:
     return sorted(files)
 
 
+def _matches_private_pattern(part: str) -> bool:
+    lower = part.lower()
+    return any(pattern in lower for pattern in PRIVATE_NAME_PATTERNS)
+
+
 def assert_no_private(paths: list[str], artifact: str) -> None:
     problems: list[str] = []
     for path in paths:
-        parts = set(path.split("/"))
+        parts = path.split("/")
         if path.startswith(PRIVATE_PREFIXES):
             problems.append(path)
-        elif path in PRIVATE_NAMES or parts.intersection(PRIVATE_NAMES):
+        elif any(part in PRIVATE_NAMES or _matches_private_pattern(part) for part in parts):
             problems.append(path)
         elif any(suffix in path for suffix in PRIVATE_SUFFIXES):
             problems.append(path)
@@ -233,6 +246,10 @@ def sdist_names(path: Path) -> list[str]:
         parts = name.split("/", 1)
         if len(parts) == 2:
             stripped.append(parts[1])
+        else:
+            # A root-level member with no version-directory prefix is
+            # anomalous; keep it visible to the checks instead of skipping it.
+            stripped.append(parts[0])
     return sorted(stripped)
 
 
@@ -285,11 +302,14 @@ def check_plugin_package(project: Path) -> None:
         joined = "\n  - ".join(missing)
         raise SystemExit(f"plugin package is missing required files:\n  - {joined}")
 
-    mismatched = sorted(
-        name
-        for name in PLUGIN_MIRRORED_FILES
-        if (project / name).read_bytes() != (plugin_root / name).read_bytes()
-    )
+    mismatched: list[str] = []
+    for name in PLUGIN_MIRRORED_FILES:
+        root_file = project / name
+        if not root_file.is_file():
+            mismatched.append(f"{name} (missing at repo root)")
+        elif root_file.read_bytes() != (plugin_root / name).read_bytes():
+            mismatched.append(name)
+    mismatched.sort()
     if mismatched:
         joined = "\n  - ".join(mismatched)
         raise SystemExit(f"plugin package files drifted from root plugin files:\n  - {joined}")

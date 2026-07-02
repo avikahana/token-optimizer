@@ -1,5 +1,5 @@
 ---
-name: Token Optimizer
+name: token-optimizer
 description: This skill should be used when the user asks to "run Token Optimizer", "inspect context bloat", "summarize files for handoff", "generate a token optimizer report", "benchmark context usage", or "manage Token Optimizer hooks" in Claude Code.
 version: 0.1.0
 ---
@@ -62,8 +62,13 @@ token-optimizer audit --project . --json
 token-optimizer outline README.md
 token-optimizer summarize README.md SECURITY.md
 token-optimizer summarize --git-state README.md
-token-optimizer benchmark --fixture benchmarks/fixtures/common-python-cli-session
+token-optimizer benchmark --fixture <fixture-path>
 ```
+
+For `benchmark`, pass an explicit fixture directory containing `baseline/`,
+`optimized/`, and `must-preserve.md`. Sample fixtures such as
+`benchmarks/fixtures/common-python-cli-session` exist only inside a checkout of
+the token-optimizer source repository, not in ordinary user projects.
 
 Use `outline` before rereading large Markdown or Python files. Use `summarize`
 for compact continuation notes from explicit files. Treat `handoff` as an alias

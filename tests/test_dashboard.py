@@ -175,5 +175,36 @@ class DashboardTests(unittest.TestCase):
             self.assertEqual(plan.output_path.read_text(encoding="utf-8"), "changed")
 
 
+
+class DashboardEscapingTests(unittest.TestCase):
+    def test_hostile_audit_content_is_escaped(self) -> None:
+        audit_json = json.dumps(
+            {
+                "project": "/tmp/<script>alert(1)</script>",
+                "score": 10,
+                "scannedFiles": 1,
+                "signals": [
+                    {
+                        "severity": "warning",
+                        "path": "<img src=x onerror=alert(1)>.md",
+                        "message": "\"quoted\" & <b>bold</b>",
+                        "recommendation": "<script>steal()</script>",
+                    }
+                ],
+                "outlineCandidates": [
+                    {"path": "<svg onload=alert(1)>.md", "lines": 1, "bytes": 1}
+                ],
+            }
+        )
+
+        rendered = render_dashboard_html(audit_json)
+
+        self.assertNotIn("<script>alert(1)</script>", rendered)
+        self.assertNotIn("<img src=x onerror=alert(1)>", rendered)
+        self.assertNotIn("<svg onload=alert(1)>", rendered)
+        self.assertNotIn("<script>steal()</script>", rendered)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", rendered)
+
+
 if __name__ == "__main__":
     unittest.main()

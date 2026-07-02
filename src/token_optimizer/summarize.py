@@ -6,7 +6,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from token_optimizer.git_state import GitStateSummary, build_git_state_summary, format_git_state_summary
-from token_optimizer.outline import OutlineError, build_outline
+from token_optimizer.limits import require_readable_size
+from token_optimizer.outline import OutlineError, OutlineItem, build_outline
 from token_optimizer.paths import reject_symlink_components_for_path, resolve_project_path
 
 
@@ -89,6 +90,10 @@ def _summarize_file(file_path: str | Path, *, project_path: Path) -> InputSummar
     if not path.is_file():
         raise SummaryError(f"path is not a file: {path}")
     try:
+        require_readable_size(path)
+    except ValueError as error:
+        raise SummaryError(str(error)) from error
+    try:
         text = path.read_text(encoding="utf-8")
     except UnicodeDecodeError as error:
         raise SummaryError(f"input file is not UTF-8: {path}") from error
@@ -108,14 +113,10 @@ def _summarize_file(file_path: str | Path, *, project_path: Path) -> InputSummar
     )
 
 
-def _compact_outline_item(item: object) -> str:
-    line = getattr(item, "line")
-    level = getattr(item, "level")
-    kind = getattr(item, "kind")
-    name = getattr(item, "name")
-    if kind == "heading":
-        return f"line {line}: {'#' * level} {name}"
-    return f"line {line}: {kind} {name}"
+def _compact_outline_item(item: OutlineItem) -> str:
+    if item.kind == "heading":
+        return f"line {item.line}: {'#' * item.level} {item.name}"
+    return f"line {item.line}: {item.kind} {item.name}"
 
 
 def _compact_excerpt(text: str) -> str:

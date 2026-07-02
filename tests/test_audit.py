@@ -222,5 +222,25 @@ class AuditTests(unittest.TestCase):
                 build_audit(path)
 
 
+
+class AuditSizeCapTests(unittest.TestCase):
+    def test_oversized_text_file_is_flagged_without_line_counting(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / "README.md").write_text("# Project\n", encoding="utf-8")
+            oversized = project / "huge.md"
+            oversized.write_text("x" * 90_000, encoding="utf-8")
+
+            report = build_audit(project)
+
+            metric = next(
+                signal
+                for signal in report.signals
+                if signal.path == "huge.md" and signal.code == "large_markdown"
+            )
+            self.assertIsNone(metric.line_count)
+            self.assertGreaterEqual(metric.byte_count or 0, 90_000)
+
+
 if __name__ == "__main__":
     unittest.main()

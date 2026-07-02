@@ -185,6 +185,35 @@ class AnthropicBenchmarkTests(unittest.TestCase):
         self.assertIn("baselineInputTokens", payload)
         self.assertIn("optimizedInputTokens", payload)
 
+    def test_zero_baseline_reports_percent_as_unavailable(self) -> None:
+        report = build_anthropic_count_report(
+            FIXTURE,
+            model=MODEL,
+            count_tokens=lambda _payload: 0,
+        )
+
+        self.assertIsNone(report.reduction_percent)
+        self.assertIn(
+            "Reduction percent: n/a (baseline is zero)",
+            format_anthropic_count_report(report),
+        )
+        payload = json.loads(anthropic_count_report_to_json(report))
+        self.assertIsNone(payload["reductionPercent"])
+
+    def test_rejects_boolean_and_negative_token_counts(self) -> None:
+        with self.assertRaises(BenchmarkRunnerError):
+            build_anthropic_count_report(
+                FIXTURE,
+                model=MODEL,
+                count_tokens=lambda _payload: True,  # type: ignore[return-value]
+            )
+        with self.assertRaises(BenchmarkRunnerError):
+            build_anthropic_count_report(
+                FIXTURE,
+                model=MODEL,
+                count_tokens=lambda _payload: {"input_tokens": -3},
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

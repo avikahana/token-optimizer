@@ -239,6 +239,10 @@ def _file_metric(project: Path, path: Path) -> FileMetric:
     relative = _relative(project, path)
     if path.suffix.lower() not in TEXT_SUFFIXES:
         return FileMetric(path, relative, byte_count, None, text=False)
+    if byte_count >= LARGE_TEXT_BYTES:
+        # The byte count alone already trips the size thresholds; skip
+        # reading the whole file end-to-end just to count its lines.
+        return FileMetric(path, relative, byte_count, None, text=True)
     try:
         line_count = _count_text_lines(path)
     except UnicodeDecodeError:

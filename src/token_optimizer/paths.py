@@ -2,11 +2,29 @@
 
 from __future__ import annotations
 
+import os
+import tempfile
 from pathlib import Path
 
 
 class UnsafePathError(ValueError):
     """Raised when a path escapes the selected project boundary."""
+
+
+def atomic_write_text(path: Path, contents: str) -> None:
+    """Write text via a same-directory temp file and atomic rename."""
+
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=path.name, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(contents)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except FileNotFoundError:
+            pass
+        raise
 
 
 def resolve_project_path(project_path: Path | str | None = None) -> Path:

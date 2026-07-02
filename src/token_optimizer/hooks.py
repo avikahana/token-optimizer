@@ -9,7 +9,12 @@ from pathlib import Path
 from typing import Any
 
 from token_optimizer.doctor import HOOKS_RELATIVE_PATH, MANAGED_MARKER
-from token_optimizer.paths import UnsafePathError, resolve_owned_path, resolve_project_path
+from token_optimizer.paths import (
+    UnsafePathError,
+    atomic_write_text,
+    resolve_owned_path,
+    resolve_project_path,
+)
 
 SUPPORTED_PROFILES = ("quiet",)
 INACTIVE_PLACEHOLDER_HOOK_MODE = "inactive-placeholder-v1"
@@ -198,7 +203,7 @@ def apply_hook_file_change(plan: HookFileChangePlan) -> HookFileChangePlan:
             raise UnsafePathError(f"hooks path does not match project-owned path: {plan.hooks_path}")
         if hooks_path.exists() and not hooks_path.is_file():
             raise UnsafePathError(f"hooks path exists but is not a file: {hooks_path}")
-        hooks_path.write_text(plan.after, encoding="utf-8")
+        atomic_write_text(hooks_path, plan.after)
     elif plan.action == "remove":
         hooks_path = _owned_hooks_path(plan.project_path)
         if plan.hooks_path != hooks_path:

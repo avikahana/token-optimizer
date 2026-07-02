@@ -124,6 +124,31 @@ class AuditTests(unittest.TestCase):
 
             self.assertIn("token_optimizer_hooks", codes)
 
+    def test_warns_for_non_object_plugin_manifest_without_crashing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / "README.md").write_text("# Project\n", encoding="utf-8")
+            manifest_dir = project / ".codex-plugin"
+            manifest_dir.mkdir()
+            (manifest_dir / "plugin.json").write_text("5", encoding="utf-8")
+
+            codes = {signal.code for signal in build_audit(project).signals}
+
+            self.assertIn("invalid_plugin_manifest", codes)
+
+    def test_string_plugin_manifest_does_not_fabricate_capabilities(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / "README.md").write_text("# Project\n", encoding="utf-8")
+            manifest_dir = project / ".codex-plugin"
+            manifest_dir.mkdir()
+            (manifest_dir / "plugin.json").write_text('"my skills doc"', encoding="utf-8")
+
+            codes = {signal.code for signal in build_audit(project).signals}
+
+            self.assertIn("invalid_plugin_manifest", codes)
+            self.assertNotIn("plugin_capabilities", codes)
+
     def test_warns_for_non_utf8_hooks_without_crashing(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)

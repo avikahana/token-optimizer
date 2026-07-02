@@ -131,7 +131,10 @@ def build_live_anthropic_count_report(
     client = factory(api_key)
 
     def count_tokens(payload: Mapping[str, Any]) -> Any:
-        return client.messages.count_tokens(**payload)
+        try:
+            return client.messages.count_tokens(**payload)
+        except Exception as exc:  # SDK errors share no useful common base
+            raise BenchmarkRunnerError(f"Anthropic count_tokens failed: {exc}") from exc
 
     return build_anthropic_count_report(
         fixture_path,

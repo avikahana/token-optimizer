@@ -10,6 +10,7 @@ from token_optimizer.benchmark_runner import (
     benchmark_report_to_json,
     build_static_benchmark_report,
     format_benchmark_report,
+    preservation_checks_for_fixture,
 )
 from token_optimizer.estimator import STATIC_MEASUREMENT_LABEL, estimate_static_tokens
 
@@ -78,6 +79,24 @@ class BenchmarkRunnerTests(unittest.TestCase):
 
             with self.assertRaises(BenchmarkRunnerError):
                 build_static_benchmark_report(fixture)
+
+    def test_facts_matching_only_file_paths_are_not_counted_as_preserved(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = Path(directory)
+            baseline = fixture / "baseline"
+            optimized = fixture / "optimized"
+            baseline.mkdir()
+            optimized.mkdir()
+            (baseline / "notes.md").write_text("optimized/notes.md holds the facts", encoding="utf-8")
+            (optimized / "notes.md").write_text("unrelated content", encoding="utf-8")
+            (fixture / "must-preserve.md").write_text(
+                "# Must Preserve\n\n- optimized/notes.md\n",
+                encoding="utf-8",
+            )
+
+            checks = preservation_checks_for_fixture(fixture)
+
+            self.assertEqual([check.present for check in checks], [False])
 
     def test_rejects_symlink_fixture(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

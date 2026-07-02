@@ -66,13 +66,16 @@ def format_git_state_summary(summary: GitStateSummary) -> str:
 
 def _run_git(project: Path, *args: str) -> list[str]:
     command = ("git", "-C", str(project), *args)
-    completed = subprocess.run(
-        command,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=5,
-    )
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise GitStateError(f"git command timed out after 5s: {' '.join(args)}") from exc
     if completed.returncode != 0:
         message = completed.stderr.strip() or completed.stdout.strip() or "git command failed"
         raise GitStateError(message)

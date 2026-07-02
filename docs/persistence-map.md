@@ -9,6 +9,12 @@ Token Optimizer should not persist anything outside the project in the MVP.
 | `.codex/token-optimizer/` | `token-optimizer config init --yes` and explicit output commands | generated Token Optimizer outputs only | `token-optimizer purge --yes` |
 | `.codex/token-optimizer/audit-dashboard.html` | `token-optimizer dashboard --yes` | static HTML dashboard generated from `audit --json` data, not raw file contents | `token-optimizer purge --yes` |
 
+> Note: `.codex/hooks.json` is a Token Optimizer-managed consent record.
+> No current host (Claude Code or Codex CLI) reads or executes entries in
+> this file, so the managed Stop-hook entry is never invoked in 0.1.0.
+> Active hook behavior, if ever shipped, will target the real host hook
+> surface through a new install flow and fresh consent.
+
 No home-directory writes are planned for the MVP.
 
 Custom dashboard output paths, when supplied, must remain under

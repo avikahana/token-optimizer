@@ -45,8 +45,12 @@ The current implemented mutating paths are:
 
 - `.codex/hooks.json` managed block, created only by
   `token-optimizer hooks install --project . --yes --experimental` or by
-  approving the plugin hook control app or native fallback. The installed
-  Stop-hook entry invokes an intentionally no-op command in 0.1.0.
+  approving the plugin hook control app or native fallback. The managed
+  Stop-hook entry names an intentionally no-op command, and no current host
+  (Claude Code or Codex CLI) reads or executes this file, so nothing ever
+  invokes it in 0.1.0. The file is a Token Optimizer-managed consent record;
+  active hook behavior, if ever shipped, will require a new install flow and
+  fresh consent.
 - `.codex/token-optimizer.json`, created or updated only by
   `token-optimizer config init --project . --yes`
 - `.codex/token-optimizer/`, created only by explicit config, dashboard, or

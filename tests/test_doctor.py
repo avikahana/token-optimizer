@@ -37,6 +37,18 @@ class DoctorTests(unittest.TestCase):
             self.assertTrue(report.hooks.exists)
             self.assertTrue(report.managed_hooks_present)
 
+    def test_doctor_handles_hooks_path_directory_without_crashing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / ".codex/hooks.json").mkdir(parents=True)
+
+            report = build_report(project)
+
+            self.assertFalse(report.managed_hooks_present)
+            self.assertTrue(
+                any("not a file" in warning for warning in report.warnings)
+            )
+
     def test_doctor_warns_about_symlink_paths(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)

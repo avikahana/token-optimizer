@@ -6,6 +6,7 @@ from pathlib import Path
 
 from token_optimizer.paths import (
     UnsafePathError,
+    atomic_write_text,
     reject_symlink_components_for_path,
     resolve_project_path,
     resolve_under_project,
@@ -52,6 +53,17 @@ class PathSafetyTests(unittest.TestCase):
 
             with self.assertRaises(UnsafePathError):
                 reject_symlink_components_for_path(symlink / "file.txt", "fixture")
+
+    def test_atomic_write_text_creates_and_overwrites_without_temp_leftovers(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "hooks.json"
+
+            atomic_write_text(target, "first")
+            self.assertEqual(target.read_text(encoding="utf-8"), "first")
+
+            atomic_write_text(target, "second")
+            self.assertEqual(target.read_text(encoding="utf-8"), "second")
+            self.assertEqual([path.name for path in Path(directory).iterdir()], ["hooks.json"])
 
 
 if __name__ == "__main__":

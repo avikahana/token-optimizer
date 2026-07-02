@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from token_optimizer.git_state import build_git_state_summary, format_git_state_summary
+from token_optimizer.git_state import GitStateError, build_git_state_summary, format_git_state_summary
 
 
 class GitStateTests(unittest.TestCase):
@@ -40,6 +40,19 @@ class GitStateTests(unittest.TestCase):
             ):
                 with self.assertRaises(ValueError):
                     build_git_state_summary(project)
+
+    def test_git_timeout_raises_git_state_error(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+
+            with patch(
+                "subprocess.run",
+                side_effect=subprocess.TimeoutExpired(cmd=("git",), timeout=5),
+            ):
+                with self.assertRaises(GitStateError) as context:
+                    build_git_state_summary(project)
+
+            self.assertIn("timed out", str(context.exception))
 
 
 if __name__ == "__main__":

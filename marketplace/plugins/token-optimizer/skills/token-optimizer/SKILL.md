@@ -58,9 +58,12 @@ Disable it with:
 PYTHONPATH=src python3 -m token_optimizer.cli hooks uninstall --project . --yes
 ```
 
-The managed Stop-hook entry invokes an intentionally no-op command in
-`inactive-placeholder-v1` mode. Future active hook behavior requires fresh
-consent rather than silently changing old no-op installs.
+The managed Stop-hook entry names an intentionally no-op command in
+`inactive-placeholder-v1` mode. `.codex/hooks.json` is a Token Optimizer-managed
+consent record: no current host (Claude Code or Codex CLI) reads or executes
+entries in this file, so nothing ever invokes the entry in 0.1.0. Future active
+hook behavior requires a new install flow and fresh consent rather than silently
+changing old no-op installs.
 
 The Codex plugin also exposes local MCP controls for the same experimental
 no-op Stop-hook entry. `token_optimizer_hook_control_app` opens an interactive

@@ -124,7 +124,7 @@ def _path_status_to_json(status: PathStatus) -> dict[str, object]:
 def _has_managed_hooks(path: Path) -> bool:
     try:
         return MANAGED_MARKER in path.read_text(encoding="utf-8")
-    except UnicodeDecodeError:
+    except (OSError, UnicodeDecodeError):
         return False
 
 

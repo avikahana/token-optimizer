@@ -15,7 +15,13 @@ from token_optimizer.hooks import (
     apply_hook_file_change,
     plan_hook_uninstall_file_change,
 )
-from token_optimizer.paths import UnsafePathError, reject_symlink, resolve_owned_path, resolve_project_path
+from token_optimizer.paths import (
+    UnsafePathError,
+    atomic_write_text,
+    reject_symlink,
+    resolve_owned_path,
+    resolve_project_path,
+)
 
 
 DEFAULT_DASHBOARD_RELATIVE_PATH = DATA_RELATIVE_PATH / "audit-dashboard.html"
@@ -111,7 +117,7 @@ def apply_config_init(plan: ConfigInitPlan) -> ConfigInitPlan:
     if plan.config_path != config_path or plan.data_path != data_path:
         raise UnsafePathError("config/data paths do not match project-owned paths")
     _validate_config_paths(config_path, data_path)
-    config_path.write_text(plan.after, encoding="utf-8")
+    atomic_write_text(config_path, plan.after)
     return plan
 
 

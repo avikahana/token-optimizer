@@ -100,8 +100,11 @@ token-optimizer purge --project . --yes
 ## Hook Handling
 
 Treat hooks as advanced and experimental in 0.1.0. The managed Stop-hook entry
-is intentionally no-op and uses `inactive-placeholder-v1`. Future active hook
-behavior requires fresh consent.
+is intentionally no-op and uses `inactive-placeholder-v1`. The managed block
+lives in `.codex/hooks.json`, which is a Token Optimizer-managed consent
+record: no current host (Claude Code or Codex CLI) reads or executes entries
+in this file, so nothing ever invokes the entry. Future active hook behavior
+requires a new install flow and fresh consent.
 
 Inspect first:
 

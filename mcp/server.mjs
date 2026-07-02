@@ -364,7 +364,18 @@ function applyPlan(plan) {
   }
   fs.mkdirSync(path.dirname(plan.hooksPath), { recursive: true });
   hooksPathFor(plan.project);
-  fs.writeFileSync(plan.hooksPath, plan.after, "utf8");
+  atomicWriteFileSync(plan.hooksPath, plan.after);
+}
+
+function atomicWriteFileSync(filePath, contents) {
+  const tmpPath = `${filePath}.tmp-${process.pid}`;
+  fs.writeFileSync(tmpPath, contents, "utf8");
+  try {
+    fs.renameSync(tmpPath, filePath);
+  } catch (error) {
+    fs.rmSync(tmpPath, { force: true });
+    throw error;
+  }
 }
 
 function formatPlanSummary(plan) {
@@ -452,8 +463,18 @@ async function handleApply(id, args) {
   const desiredEnabled = Boolean(args.enabled);
   const reviewedDryRun = Boolean(args.reviewedDryRun);
   const currentlyEnabled = isInstalled(project);
+  if (desiredEnabled === currentlyEnabled) {
+    sendResult(
+      id,
+      toolResult(
+        `Experimental Stop-hook entry is already ${currentlyEnabled ? "installed" : "not installed"} for ${project}. No files were changed.`,
+        { ...hookStatePayload(project), status: "noop", desiredEnabled },
+      ),
+    );
+    return;
+  }
   const plan = desiredEnabled ? planInstall(project) : planUninstall(project);
-  if (desiredEnabled !== currentlyEnabled && !reviewedDryRun) {
+  if (!reviewedDryRun) {
     sendResult(
       id,
       toolResult("No files were changed because dry-run approval was not checked.", {
@@ -464,7 +485,7 @@ async function handleApply(id, args) {
     );
     return;
   }
-  if (desiredEnabled !== currentlyEnabled && args.reviewedPlanDigest !== plan.planDigest) {
+  if (args.reviewedPlanDigest !== plan.planDigest) {
     sendResult(
       id,
       toolResult("No files were changed because the dry-run plan changed after review.", {
@@ -479,43 +500,41 @@ async function handleApply(id, args) {
     return;
   }
 
-  if (desiredEnabled !== currentlyEnabled) {
-    const confirmation = await request("elicitation/create", {
-      mode: "form",
-      message: [
-        "Token Optimizer hook-control app approval",
-        "",
-        `Project: ${project}`,
-        `Requested state: ${desiredEnabled ? "installed" : "not installed"}`,
-        "",
-        formatPlanSummary(plan),
-        "",
-        "Approve only if this dry-run summary matches the change you reviewed in the app.",
-      ].join("\n"),
-      requestedSchema: {
-        type: "object",
-        properties: {
-          approveChange: {
-            type: "boolean",
-            title: "I approve this project-local hook change",
-            default: false,
-          },
+  const confirmation = await request("elicitation/create", {
+    mode: "form",
+    message: [
+      "Token Optimizer hook-control app approval",
+      "",
+      `Project: ${project}`,
+      `Requested state: ${desiredEnabled ? "installed" : "not installed"}`,
+      "",
+      formatPlanSummary(plan),
+      "",
+      "Approve only if this dry-run summary matches the change you reviewed in the app.",
+    ].join("\n"),
+    requestedSchema: {
+      type: "object",
+      properties: {
+        approveChange: {
+          type: "boolean",
+          title: "I approve this project-local hook change",
+          default: false,
         },
-        required: ["approveChange"],
       },
-    });
+      required: ["approveChange"],
+    },
+  });
 
-    if (confirmation?.action !== "accept" || !confirmation.content?.approveChange) {
-      sendResult(
-        id,
-        toolResult("Hook control approval was cancelled. No files were changed.", {
-          ...hookStatePayload(project),
-          status: "cancelled",
-          desiredEnabled,
-        }),
-      );
-      return;
-    }
+  if (confirmation?.action !== "accept" || !confirmation.content?.approveChange) {
+    sendResult(
+      id,
+      toolResult("Hook control approval was cancelled. No files were changed.", {
+        ...hookStatePayload(project),
+        status: "cancelled",
+        desiredEnabled,
+      }),
+    );
+    return;
   }
 
   applyPlan(plan);
@@ -591,7 +610,21 @@ async function handleToggle(id, args) {
 
   const desiredEnabled = Boolean(elicitation.content?.enabled);
   const reviewedDryRun = Boolean(elicitation.content?.reviewedDryRun);
-  if (desiredEnabled !== currentlyEnabled && !reviewedDryRun) {
+  if (desiredEnabled === currentlyEnabled) {
+    sendResult(
+      id,
+      toolResult(
+        `Experimental Stop-hook entry is already ${currentlyEnabled ? "installed" : "not installed"} for ${project}. No files were changed.`,
+        {
+          status: "noop",
+          projectPath: project,
+          desiredEnabled,
+        },
+      ),
+    );
+    return;
+  }
+  if (!reviewedDryRun) {
     sendResult(
       id,
       toolResult("No files were changed because dry-run approval was not checked.", {

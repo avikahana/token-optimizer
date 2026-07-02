@@ -417,6 +417,17 @@ def _plugin_capability_signals(project: Path, metrics: list[FileMetric]) -> list
                 )
             )
         else:
+            if not isinstance(payload, dict):
+                signals.append(
+                    AuditSignal(
+                        code="invalid_plugin_manifest",
+                        severity="warning",
+                        path=".codex-plugin/plugin.json",
+                        message="plugin manifest must be a JSON object",
+                        recommendation="Fix the manifest before relying on plugin capability inventory.",
+                    )
+                )
+                payload = {}
             count = _declared_capability_count(payload)
             if count:
                 signals.append(

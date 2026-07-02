@@ -523,6 +523,105 @@ class PluginManifestTests(unittest.TestCase):
                 process.kill()
                 process.wait(timeout=5)
 
+    def test_hook_apply_and_toggle_never_write_when_state_already_matches(self) -> None:
+        node = os.environ.get("NODE_BINARY") or shutil.which("node")
+        if node is None:
+            self.skipTest("node is required to test the plugin MCP server")
+        root = Path(__file__).resolve().parents[1]
+        server_path = root / "mcp/server.mjs"
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            hooks_path = project / ".codex/hooks.json"
+            hooks_path.parent.mkdir()
+            # Installed state whose on-disk content diverges from the canonical
+            # rendering (legacy command, unsorted keys), so a fresh install plan
+            # is action "update" and a consent-free rewrite would be observable.
+            divergent = json.dumps(
+                {
+                    "_tokenOptimizer": {"marker": MANAGED_MARKER},
+                    "Stop": [
+                        {
+                            "matcher": "*",
+                            "hooks": [
+                                {
+                                    "type": "command",
+                                    "command": "token-optimizer summarize --hook stop",
+                                    "timeout": 30,
+                                }
+                            ],
+                        }
+                    ],
+                }
+            )
+            hooks_path.write_text(divergent, encoding="utf-8")
+            process = subprocess.Popen(
+                [node, str(server_path)],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                text=True,
+                cwd=project,
+            )
+            try:
+                self._send_mcp(process, {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
+                self._read_mcp(process)
+
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 2,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "token_optimizer_hook_apply",
+                            "arguments": {
+                                "projectPath": str(project),
+                                "enabled": True,
+                                "reviewedDryRun": False,
+                                "reviewedPlanDigest": "",
+                            },
+                        },
+                    },
+                )
+                apply_result = self._read_mcp(process)["result"]["structuredContent"]
+                self.assertEqual(apply_result["status"], "noop")
+                self.assertEqual(hooks_path.read_text(encoding="utf-8"), divergent)
+
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 3,
+                        "method": "tools/call",
+                        "params": {
+                            "name": "token_optimizer_hook_toggle",
+                            "arguments": {"projectPath": str(project)},
+                        },
+                    },
+                )
+                request = self._read_mcp(process)
+                self.assertEqual(request["method"], "elicitation/create")
+                self._send_mcp(
+                    process,
+                    {
+                        "jsonrpc": "2.0",
+                        "id": request["id"],
+                        "result": {
+                            "action": "accept",
+                            "content": {"enabled": True, "reviewedDryRun": False},
+                        },
+                    },
+                )
+                toggle_result = self._read_mcp(process)["result"]["structuredContent"]
+                self.assertEqual(toggle_result["status"], "noop")
+                self.assertEqual(hooks_path.read_text(encoding="utf-8"), divergent)
+            finally:
+                if process.stdin is not None:
+                    process.stdin.close()
+                if process.stdout is not None:
+                    process.stdout.close()
+                process.kill()
+                process.wait(timeout=5)
+
     def test_hook_toggle_mcp_server_rejects_project_outside_workspace(self) -> None:
         node = os.environ.get("NODE_BINARY") or shutil.which("node")
         if node is None:

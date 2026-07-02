@@ -129,6 +129,24 @@ class AnthropicBenchmarkTests(unittest.TestCase):
         self.assertEqual(report.optimized_input_tokens, 80)
         self.assertEqual(report.reduction, 40)
 
+    def test_live_report_wraps_sdk_errors_as_benchmark_errors(self) -> None:
+        class FakeMessages:
+            def count_tokens(self, **_payload: Any) -> None:
+                raise RuntimeError("authentication_error: invalid x-api-key")
+
+        class FakeClient:
+            messages = FakeMessages()
+
+        with self.assertRaises(BenchmarkRunnerError) as context:
+            build_live_anthropic_count_report(
+                FIXTURE,
+                model=MODEL,
+                environ={"ANTHROPIC_API_KEY": "test-key"},
+                client_factory=lambda _api_key: FakeClient(),
+            )
+
+        self.assertIn("Anthropic count_tokens failed", str(context.exception))
+
     def test_rejects_invalid_counter_result(self) -> None:
         with self.assertRaises(BenchmarkRunnerError):
             build_anthropic_count_report(

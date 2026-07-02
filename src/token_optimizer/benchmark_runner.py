@@ -213,7 +213,8 @@ def fixture_side_text(fixture: Path, side: str) -> str:
 def preservation_checks_for_fixture(fixture: Path) -> tuple[PreservationCheck, ...]:
     """Check that the optimized fixture side preserves required facts."""
 
-    optimized_text = fixture_side_text(fixture, "optimized")
+    directory = required_fixture_directory(fixture / "optimized", "optimized")
+    optimized_text = _read_text_files(directory)
     return tuple(
         PreservationCheck(fact=fact, present=fact in optimized_text)
         for fact in must_preserve_facts(fixture / "must-preserve.md")
@@ -260,12 +261,8 @@ def _preservation_checks(
     optimized_text = _read_text_files(optimized_dir)
     return tuple(
         PreservationCheck(fact=fact, present=fact in optimized_text)
-        for fact in _must_preserve_facts(must_preserve)
+        for fact in must_preserve_facts(must_preserve)
     )
-
-
-def _must_preserve_facts(path: Path) -> tuple[str, ...]:
-    return must_preserve_facts(path)
 
 
 def _read_text_files(directory: Path) -> str:

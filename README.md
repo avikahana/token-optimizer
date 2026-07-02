@@ -1,7 +1,7 @@
 <h1 align="center">Token Optimizer</h1>
 
 <p align="center">
-  <img src="./assets/logo.png" alt="Token Optimizer logo" width="360">
+  <img src="https://raw.githubusercontent.com/avikahana/token-optimizer/main/assets/logo.png" alt="Token Optimizer logo" width="360">
 </p>
 
 <p align="center">
@@ -151,7 +151,7 @@
 </table>
 
 <p align="center">
-  <img src="./assets/screenshot-dashboard.png" alt="Token Optimizer audit dashboard preview" width="920">
+  <img src="https://raw.githubusercontent.com/avikahana/token-optimizer/main/assets/screenshot-dashboard.png" alt="Token Optimizer audit dashboard preview" width="920">
 </p>
 
 <h2 align="center">Quick Start</h2>
@@ -178,7 +178,7 @@ token-optimizer summarize README.md SECURITY.md
 <h2 align="center">How It Works</h2>
 
 <p align="center">
-  <img src="./assets/workflow-overview.svg" alt="Token Optimizer workflow overview" width="920">
+  <img src="https://raw.githubusercontent.com/avikahana/token-optimizer/main/assets/workflow-overview.svg" alt="Token Optimizer workflow overview" width="920">
 </p>
 
 <table align="center">
@@ -205,7 +205,7 @@ token-optimizer summarize README.md SECURITY.md
 > claim.
 
 <p align="center">
-  <img src="./assets/benchmark-snapshot.svg" alt="Common Python CLI fixture benchmark chart" width="780">
+  <img src="https://raw.githubusercontent.com/avikahana/token-optimizer/main/assets/benchmark-snapshot.svg" alt="Common Python CLI fixture benchmark chart" width="780">
 </p>
 
 <table align="center">
@@ -317,7 +317,7 @@ token-optimizer summarize README.md SECURITY.md
 </p>
 
 <p align="center">
-  <img src="./assets/provider-modes.svg" alt="Token Optimizer provider benchmark modes" width="920">
+  <img src="https://raw.githubusercontent.com/avikahana/token-optimizer/main/assets/provider-modes.svg" alt="Token Optimizer provider benchmark modes" width="920">
 </p>
 
 <h2 align="center">Pros And Tradeoffs</h2>
@@ -418,10 +418,10 @@ separately.
 <p align="center"><strong>Detailed install and support docs:</strong></p>
 
 <p align="center">
-  <a href="docs/install-cli.md">CLI Install</a> ·
-  <a href="docs/install-codex.md">Codex Install</a> ·
-  <a href="docs/install-claude-code.md">Claude Code Install</a> ·
-  <a href="docs/provider-support.md">Provider And Surface Support</a>
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/docs/install-cli.md">CLI Install</a> ·
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/docs/install-codex.md">Codex Install</a> ·
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/docs/install-claude-code.md">Claude Code Install</a> ·
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/docs/provider-support.md">Provider And Surface Support</a>
 </p>
 
 <h2 align="center">Release Checks</h2>
@@ -441,7 +441,7 @@ claude plugin validate ./plugins/token-optimizer
 ```
 
 For local marketplace install checks, use
-[`docs/local-marketplace-verification.md`](docs/local-marketplace-verification.md).
+[`docs/local-marketplace-verification.md`](https://github.com/avikahana/token-optimizer/blob/main/docs/local-marketplace-verification.md).
 
 <table align="center">
   <thead>
@@ -463,13 +463,13 @@ For local marketplace install checks, use
 <h2 align="center">More Docs</h2>
 
 <p align="center">
-  <a href="SECURITY.md">Security</a> ·
-  <a href="PRIVACY.md">Privacy</a> ·
-  <a href="TERMS.md">Terms</a> ·
-  <a href="RELEASE_NOTES.md">Release Notes</a> ·
-  <a href="docs/benchmarking.md">Benchmarking</a> ·
-  <a href="docs/provider-benchmark-contributor-guide.md">Provider Guide</a> ·
-  <a href="docs/persistence-map.md">Persistence Map</a>
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/SECURITY.md">Security</a> ·
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/PRIVACY.md">Privacy</a> ·
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/TERMS.md">Terms</a> ·
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/RELEASE_NOTES.md">Release Notes</a> ·
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/docs/benchmarking.md">Benchmarking</a> ·
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/docs/provider-benchmark-contributor-guide.md">Provider Guide</a> ·
+  <a href="https://github.com/avikahana/token-optimizer/blob/main/docs/persistence-map.md">Persistence Map</a>
 </p>
 
 <h2 align="center">Public URLs</h2>

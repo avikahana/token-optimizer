@@ -26,7 +26,7 @@ MANAGED_COMMAND = (
 )
 LEGACY_MANAGED_COMMAND = "token-optimizer summarize --hook stop"
 EXPERIMENTAL_HOOK_WARNING = (
-    "Stop-hook entry installation is experimental and invokes a no-op command in 0.1.0; "
+    "Stop-hook entry installation is experimental and invokes a no-op command in 0.2.0; "
     "use --experimental with --yes only after reviewing the dry-run plan."
 )
 

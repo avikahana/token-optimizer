@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import crypto from "node:crypto";
 import path from "node:path";
@@ -5,17 +6,20 @@ import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
 const SERVER_NAME = "Token Optimizer Hook Control";
+const SERVER_VERSION = "0.2.0";
 const STATUS_TOOL = "token_optimizer_hook_status";
 const TOGGLE_TOOL = "token_optimizer_hook_toggle";
 const APP_TOOL = "token_optimizer_hook_control_app";
 const APPLY_TOOL = "token_optimizer_hook_apply";
+const GAUGES_TOOL = "token_optimizer_context_gauges";
+const GAUGES_APP_TOOL = "token_optimizer_context_gauges_app";
 const MANAGED_MARKER = "TOKEN_OPTIMIZER_MANAGED";
 const HOOK_MODE = "inactive-placeholder-v1";
 const MANAGED_COMMAND =
   `token-optimizer summarize --hook stop --hook-mode ${HOOK_MODE}`;
 const LEGACY_MANAGED_COMMAND = "token-optimizer summarize --hook stop";
 const HOOK_WARNING =
-  "Stop-hook entry installation is experimental in 0.1.0 and invokes an intentionally no-op command; use hook control only after reviewing the dry-run plan.";
+  "Stop-hook entry installation is experimental in 0.2.0 and invokes an intentionally no-op command; use hook control only after reviewing the dry-run plan.";
 const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url));
 // The containment boundary for every write. Hosts do not all honor the
 // `cwd` field in .mcp.json, so an explicit env override comes first.
@@ -23,8 +27,29 @@ const WORKSPACE_ROOT = fs.realpathSync(
   process.env.TOKEN_OPTIMIZER_WORKSPACE_ROOT ?? process.cwd(),
 );
 const WIDGET_URI = "ui://token-optimizer/hook-control.html";
+const GAUGES_WIDGET_URI = "ui://token-optimizer/context-gauges.html";
 const WIDGET_MIME_TYPE = "text/html;profile=mcp-app";
+const WIDGET_DESCRIPTION =
+  "Review and install or remove Token Optimizer's experimental no-op Stop-hook entry for the selected project.";
+const GAUGES_WIDGET_DESCRIPTION =
+  "Read-only context-health gauges recomputed on demand from the Token Optimizer static audit.";
+const WIDGET_RESOURCES = {
+  [WIDGET_URI]: {
+    name: "Token Optimizer Hook Control",
+    file: "hook-control-widget.html",
+    description:
+      "Interactive project-local control for the experimental no-op Stop-hook entry.",
+    widgetDescription: WIDGET_DESCRIPTION,
+  },
+  [GAUGES_WIDGET_URI]: {
+    name: "Token Optimizer Context Gauges",
+    file: "context-gauges-widget.html",
+    description: GAUGES_WIDGET_DESCRIPTION,
+    widgetDescription: GAUGES_WIDGET_DESCRIPTION,
+  },
+};
 const REQUEST_TIMEOUT_MS = 30000;
+const GAUGES_CLI_TIMEOUT_MS = 20000;
 
 const JsonRpcError = {
   METHOD_NOT_FOUND: -32601,
@@ -428,8 +453,102 @@ function hookStatePayload(project) {
   };
 }
 
-function readWidgetHtml() {
-  return fs.readFileSync(path.join(SERVER_DIR, "hook-control-widget.html"), "utf8");
+function readWidgetHtml(uri) {
+  return fs.readFileSync(path.join(SERVER_DIR, WIDGET_RESOURCES[uri].file), "utf8");
+}
+
+function gaugesCliCommand() {
+  const raw = process.env.TOKEN_OPTIMIZER_CLI_JSON;
+  if (raw === undefined || raw.trim().length === 0) {
+    return ["token-optimizer"];
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`TOKEN_OPTIMIZER_CLI_JSON is not valid JSON: ${error.message}`);
+  }
+  if (
+    !Array.isArray(parsed) ||
+    parsed.length === 0 ||
+    parsed.some((entry) => typeof entry !== "string" || entry.trim().length === 0)
+  ) {
+    throw new Error("TOKEN_OPTIMIZER_CLI_JSON must be a JSON array of non-empty strings.");
+  }
+  return parsed;
+}
+
+function gaugesStatePayload(project) {
+  const [command, ...prefixArgs] = gaugesCliCommand();
+  const result = spawnSync(
+    command,
+    [...prefixArgs, "gauges", "--project", project, "--json"],
+    {
+      cwd: WORKSPACE_ROOT,
+      encoding: "utf8",
+      timeout: GAUGES_CLI_TIMEOUT_MS,
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
+  if (result.error) {
+    if (result.error.code === "ENOENT") {
+      throw new Error(
+        "The token-optimizer CLI was not found on PATH. Install it first (pip install token-optimizer), then retry.",
+      );
+    }
+    throw new Error(`gauges CLI failed to run: ${result.error.message}`);
+  }
+  if (result.status !== 0) {
+    const detail = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
+    throw new Error(
+      `gauges CLI exited with status ${result.status}${detail ? `: ${detail}` : ""}`,
+    );
+  }
+  let gauges;
+  try {
+    gauges = JSON.parse(result.stdout);
+  } catch (error) {
+    throw new Error(`gauges CLI produced invalid JSON: ${error.message}`);
+  }
+  return {
+    projectPath: project,
+    gauges,
+    computedAt: new Date().toISOString(),
+    stateDigest: crypto.createHash("sha256").update(result.stdout).digest("hex"),
+  };
+}
+
+function gaugesSummaryText(state) {
+  const gauges = state.gauges;
+  const signalText = Object.entries(gauges.signalCounts ?? {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([severity, count]) => `${count} ${severity}`)
+    .join(", ");
+  return [
+    `Context gauges for ${state.projectPath} (computed ${state.computedAt}).`,
+    `Score ${gauges.score}/100, static token estimate ${gauges.staticTokenEstimate} (${gauges.measurement}), ${gauges.scannedFiles} files scanned.`,
+    `Signals: ${signalText || "none"}. Outline candidates: ${gauges.outlineCandidateCount}. Managed hooks present: ${gauges.managedHooksPresent ? "yes" : "no"}.`,
+  ].join(" ");
+}
+
+async function handleGauges(id, args) {
+  const project = requireProjectPath(args.projectPath);
+  const state = gaugesStatePayload(project);
+  sendResult(id, toolResult(gaugesSummaryText(state), state));
+}
+
+async function handleGaugesApp(id, args) {
+  const project = requireProjectPath(args.projectPath);
+  const state = gaugesStatePayload(project);
+  sendResult(
+    id,
+    toolResult(`Opened Token Optimizer context gauges for ${project}.`, state, {
+      _meta: {
+        ui: { resourceUri: GAUGES_WIDGET_URI },
+        "openai/outputTemplate": GAUGES_WIDGET_URI,
+      },
+    }),
+  );
 }
 
 async function handleStatus(id, args) {
@@ -568,7 +687,7 @@ async function handleToggle(id, args) {
     "",
     "This controls only the experimental Stop-hook entry for this project.",
     "Turning on installs a Token Optimizer managed block in .codex/hooks.json.",
-    "The installed entry invokes an intentionally no-op command in 0.1.0.",
+    "The installed entry invokes an intentionally no-op command in 0.2.0.",
     "Turning off removes only Token Optimizer managed hook content.",
     "Future active Stop-hook behavior still requires fresh consent.",
     "",
@@ -674,6 +793,14 @@ async function handleToolCall(id, params) {
     await handleApply(id, args);
     return;
   }
+  if (params?.name === GAUGES_TOOL) {
+    await handleGauges(id, args);
+    return;
+  }
+  if (params?.name === GAUGES_APP_TOOL) {
+    await handleGaugesApp(id, args);
+    return;
+  }
   sendError(id, JsonRpcError.METHOD_NOT_FOUND, `Unknown tool: ${params?.name ?? ""}`);
 }
 
@@ -686,10 +813,10 @@ async function handleRequest(message) {
       capabilities: { tools: {}, resources: {} },
       serverInfo: {
         name: SERVER_NAME,
-        version: "0.1.0",
+        version: SERVER_VERSION,
       },
       instructions:
-        "Use token_optimizer_hook_control_app for Token Optimizer hook control when MCP UI resources are available; use token_optimizer_hook_toggle as the native approval-form fallback. Both control only the project-local experimental Stop-hook entry, whose command is intentionally no-op in 0.1.0, and write .codex/hooks.json only after dry-run approval.",
+        "Use token_optimizer_hook_control_app for Token Optimizer hook control when MCP UI resources are available; use token_optimizer_hook_toggle as the native approval-form fallback. Both control only the project-local experimental Stop-hook entry, whose command is intentionally no-op in 0.2.0, and write .codex/hooks.json only after dry-run approval. Use token_optimizer_context_gauges_app for read-only context-health gauges when MCP UI resources are available; use token_optimizer_context_gauges for the plain read-only gauges payload. Gauges recompute the static audit on demand and never write files.",
     });
     return;
   }
@@ -815,30 +942,56 @@ async function handleRequest(message) {
             ui: { visibility: ["app"] },
           },
         },
-      ],
-    });
-    return;
-  }
-
-  if (method === "resources/list") {
-    sendResult(id, {
-      resources: [
         {
-          uri: WIDGET_URI,
-          name: "Token Optimizer Hook Control",
-          title: "Token Optimizer Hook Control",
-          description: "Interactive project-local control for the experimental no-op Stop-hook entry.",
-          mimeType: WIDGET_MIME_TYPE,
-          _meta: {
-            ui: {
-              prefersBorder: true,
-              csp: {
-                connectDomains: [],
-                resourceDomains: [],
+          name: GAUGES_TOOL,
+          title: "Token Optimizer Context Gauges",
+          description:
+            "Read compact context-health gauges for a project by recomputing the Token Optimizer static audit on demand. Read-only, no writes.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              projectPath: {
+                type: "string",
+                description:
+                  "Absolute path to the project whose context-health gauges should be computed.",
               },
             },
-            "openai/widgetDescription":
-              "Review and install or remove Token Optimizer's experimental no-op Stop-hook entry for the selected project.",
+            required: ["projectPath"],
+          },
+          annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false,
+          },
+        },
+        {
+          name: GAUGES_APP_TOOL,
+          title: "Token Optimizer Context Gauges App",
+          description:
+            "Open a read-only visual panel of context-health gauges for a project, recomputed on demand from the Token Optimizer static audit.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              projectPath: {
+                type: "string",
+                description:
+                  "Absolute path to the project whose context-health gauges should be shown.",
+              },
+            },
+            required: ["projectPath"],
+          },
+          annotations: {
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false,
+          },
+          _meta: {
+            ui: { resourceUri: GAUGES_WIDGET_URI },
+            "openai/outputTemplate": GAUGES_WIDGET_URI,
+            "openai/toolInvocation/invoking": "Computing Token Optimizer context gauges",
+            "openai/toolInvocation/invoked": "Token Optimizer context gauges ready",
           },
         },
       ],
@@ -846,17 +999,41 @@ async function handleRequest(message) {
     return;
   }
 
+  if (method === "resources/list") {
+    sendResult(id, {
+      resources: Object.entries(WIDGET_RESOURCES).map(([uri, resource]) => ({
+        uri,
+        name: resource.name,
+        title: resource.name,
+        description: resource.description,
+        mimeType: WIDGET_MIME_TYPE,
+        _meta: {
+          ui: {
+            prefersBorder: true,
+            csp: {
+              connectDomains: [],
+              resourceDomains: [],
+            },
+          },
+          "openai/widgetDescription": resource.widgetDescription,
+        },
+      })),
+    });
+    return;
+  }
+
   if (method === "resources/read") {
-    if (params?.uri !== WIDGET_URI) {
+    const resource = WIDGET_RESOURCES[params?.uri];
+    if (resource === undefined) {
       sendError(id, JsonRpcError.INVALID_PARAMS, `Unknown resource: ${params?.uri ?? ""}`);
       return;
     }
     sendResult(id, {
       contents: [
         {
-          uri: WIDGET_URI,
+          uri: params.uri,
           mimeType: WIDGET_MIME_TYPE,
-          text: readWidgetHtml(),
+          text: readWidgetHtml(params.uri),
           _meta: {
             ui: {
               prefersBorder: true,
@@ -865,8 +1042,7 @@ async function handleRequest(message) {
                 resourceDomains: [],
               },
             },
-            "openai/widgetDescription":
-              "Review and install or remove Token Optimizer's experimental no-op Stop-hook entry for the selected project.",
+            "openai/widgetDescription": resource.widgetDescription,
           },
         },
       ],

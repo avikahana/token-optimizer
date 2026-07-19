@@ -36,11 +36,11 @@ PRIVATE_SUFFIXES = (
 
 WHEEL_ALLOWED_PREFIXES = (
     "token_optimizer/",
-    "token_optimizer-0.1.0.dist-info/",
+    "token_optimizer-0.2.0.dist-info/",
 )
 
 WHEEL_ALLOWED_FILES = {
-    "token_optimizer-0.1.0.dist-info/licenses/LICENSE",
+    "token_optimizer-0.2.0.dist-info/licenses/LICENSE",
 }
 
 PLUGIN_ALLOWED_PREFIXES = (

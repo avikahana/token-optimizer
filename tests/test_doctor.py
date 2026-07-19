@@ -71,7 +71,7 @@ class DoctorTests(unittest.TestCase):
             rendered = format_report(build_report(project))
 
             self.assertIn("Token Optimizer Doctor", rendered)
-            self.assertIn("Version: 0.1.0", rendered)
+            self.assertIn("Version: 0.2.0", rendered)
             self.assertIn(f"Project: {project.resolve()}", rendered)
             self.assertIn("Managed hooks present: no", rendered)
             self.assertIn("Warnings: none", rendered)
@@ -104,7 +104,7 @@ class DoctorTests(unittest.TestCase):
 
             payload = json.loads(report_to_json(build_report(project)))
 
-            self.assertEqual(payload["version"], "0.1.0")
+            self.assertEqual(payload["version"], "0.2.0")
             self.assertEqual(payload["project"], str(project.resolve()))
             self.assertEqual(payload["managedMarker"], MANAGED_MARKER)
             self.assertFalse(payload["managedHooksPresent"])

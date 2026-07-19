@@ -41,7 +41,7 @@ universal counts.
 |---|---|---|---|
 | CLI | Implemented core surface | `docs/install-cli.md` | Local-first CLI, explicit commands, no default daemon or network calls. |
 | Codex | Native package implemented | `docs/install-codex.md` | Skill guidance plus local MCP hook-control surface. No default hook install. |
-| Claude Code | Native skill-only package implemented | `docs/install-claude-code.md` | Skill-only in 0.1.0. Requires separate CLI install. No hooks, MCP server, daemon, or bundled CLI. |
+| Claude Code | Native skill-only package implemented | `docs/install-claude-code.md` | Skill-only in 0.2.0. Requires separate CLI install. No hooks, MCP server, daemon, or bundled CLI. |
 
 ## CLI-Compatible Or Research-Needed Surfaces
 

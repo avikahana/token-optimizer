@@ -33,7 +33,7 @@ codex plugin add token-optimizer@token-optimizer-local --json
 
 Then compare the source package under `marketplace/plugins/token-optimizer/`
 with the installed cache under
-`~/.codex/plugins/cache/token-optimizer-local/token-optimizer/0.1.0/`.
+`~/.codex/plugins/cache/token-optimizer-local/token-optimizer/0.2.0/`.
 
 The full local checklist lives in `docs/local-marketplace-verification.md`.
 
@@ -61,7 +61,7 @@ The full local checklist lives in `docs/local-marketplace-verification.md`.
 
 The visual and native hook-control paths only install or remove Token
 Optimizer-managed content in project-local `.codex/hooks.json`, and only after
-explicit approval. The installed 0.1.0 Stop-hook entry invokes an intentionally
+explicit approval. The installed 0.2.0 Stop-hook entry invokes an intentionally
 no-op command.
 
 The MCP server refuses to write outside its workspace root. By default the

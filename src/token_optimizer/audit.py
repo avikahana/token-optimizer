@@ -50,6 +50,7 @@ class AuditReport:
     score: int
     signals: tuple[AuditSignal, ...]
     outline_candidates: tuple[FileMetric, ...]
+    total_text_bytes: int = 0
 
 
 SKIP_DIR_NAMES = {
@@ -128,6 +129,7 @@ def build_audit(project_path: str | Path | None = None) -> AuditReport:
         score=score,
         signals=tuple(signals),
         outline_candidates=candidates,
+        total_text_bytes=sum(metric.byte_count for metric in metrics if metric.text),
     )
 
 

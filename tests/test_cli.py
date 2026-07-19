@@ -27,7 +27,7 @@ class CliTests(unittest.TestCase):
                 main(["--version"])
 
         self.assertEqual(raised.exception.code, 0)
-        self.assertEqual(output.getvalue().strip(), "token-optimizer 0.1.0")
+        self.assertEqual(output.getvalue().strip(), "token-optimizer 0.2.0")
 
     def test_summarize_accepts_hook_placeholder(self) -> None:
         output = io.StringIO()
@@ -134,7 +134,7 @@ class CliTests(unittest.TestCase):
 
         payload = json.loads(output.getvalue())
         self.assertEqual(status, 0)
-        self.assertEqual(payload["version"], "0.1.0")
+        self.assertEqual(payload["version"], "0.2.0")
         self.assertIn("paths", payload)
         self.assertIn("config", payload["paths"])
         self.assertIn("managedHooksPresent", payload)

@@ -25,7 +25,7 @@ The controls show the dry-run plan first, require explicit approval, and write
 only project-local Token Optimizer hook config. They do not add daemons,
 network calls, telemetry, or background behavior.
 
-The Claude Code plugin is skill-only in 0.1.0. It does not bundle the Python
+The Claude Code plugin is skill-only in 0.2.0. It does not bundle the Python
 CLI, install hooks, start an MCP server, add daemons, make network calls,
 collect telemetry, or add background behavior. It provides workflow guidance for
 using a separately installed `token-optimizer` CLI.
@@ -48,7 +48,7 @@ The current implemented mutating paths are:
   approving the plugin hook control app or native fallback. The managed
   Stop-hook entry names an intentionally no-op command, and no current host
   (Claude Code or Codex CLI) reads or executes this file, so nothing ever
-  invokes it in 0.1.0. The file is a Token Optimizer-managed consent record;
+  invokes it in 0.2.0. The file is a Token Optimizer-managed consent record;
   active hook behavior, if ever shipped, will require a new install flow and
   fresh consent.
 - `.codex/token-optimizer.json`, created or updated only by

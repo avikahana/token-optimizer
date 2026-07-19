@@ -61,7 +61,7 @@
   <tbody>
     <tr><th>Package</th><td><code>token-optimizer</code></td></tr>
     <tr><th>CLI</th><td><code>token-optimizer</code></td></tr>
-    <tr><th>Version</th><td><code>0.1.0</code></td></tr>
+    <tr><th>Version</th><td><code>0.2.0</code></td></tr>
     <tr><th>License</th><td>Apache-2.0</td></tr>
     <tr><th>Default network calls</th><td>none</td></tr>
     <tr><th>Default daemon/background process</th><td>none</td></tr>
@@ -315,7 +315,7 @@ token-optimizer summarize README.md SECURITY.md
   <tbody>
     <tr><td>Network</td><td>No default network calls</td><td>Live provider benchmarks only when explicitly invoked</td></tr>
     <tr><td>Persistence</td><td>No raw transcripts, raw file contents, or raw tool output</td><td>Project-local config/data with <code>--yes</code></td></tr>
-    <tr><td>Hooks</td><td>No hook installed by plugin installation</td><td>Advanced experimental Stop-hook entry requires dry-run review plus <code>--yes --experimental</code>, hook control app approval, or explicit native-form approval; the installed command is intentionally no-op in 0.1.0</td></tr>
+    <tr><td>Hooks</td><td>No hook installed by plugin installation</td><td>Advanced experimental Stop-hook entry requires dry-run review plus <code>--yes --experimental</code>, hook control app approval, or explicit native-form approval; the installed command is intentionally no-op in 0.2.0</td></tr>
     <tr><td>Dashboard</td><td>No server or watcher</td><td>Static HTML file under <code>.codex/token-optimizer/</code></td></tr>
     <tr><td>Cleanup</td><td>No implicit deletes</td><td><code>purge --dry-run</code>, then <code>purge --yes</code></td></tr>
   </tbody>
@@ -420,7 +420,7 @@ token-optimizer summarize README.md SECURITY.md
 <p align="center">
   Token Optimizer ships native package surfaces for Codex and Claude Code. The
   Codex package includes the local MCP hook-control surface. The Claude Code
-  package is skill-only in 0.1.0 and guides safe CLI usage without installing
+  package is skill-only in 0.2.0 and guides safe CLI usage without installing
   hooks, starting MCP servers, or bundling the Python CLI binary.
 </p>
 

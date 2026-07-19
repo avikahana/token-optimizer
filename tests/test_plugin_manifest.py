@@ -23,7 +23,7 @@ class PluginManifestTests(unittest.TestCase):
         manifest = json.loads((root / ".codex-plugin/plugin.json").read_text())
 
         self.assertEqual(manifest["name"], "token-optimizer")
-        self.assertEqual(manifest["version"], "0.1.0")
+        self.assertEqual(manifest["version"], "0.2.0")
         self.assertEqual(manifest["license"], "Apache-2.0")
         self.assertEqual(manifest["homepage"], self.REPOSITORY_URL)
         self.assertEqual(manifest["repository"], self.REPOSITORY_URL)
@@ -96,7 +96,7 @@ class PluginManifestTests(unittest.TestCase):
         manifest = json.loads((plugin_root / ".claude-plugin/plugin.json").read_text())
 
         self.assertEqual(manifest["name"], "token-optimizer")
-        self.assertEqual(manifest["version"], "0.1.0")
+        self.assertEqual(manifest["version"], "0.2.0")
         self.assertEqual(manifest["license"], "Apache-2.0")
         self.assertEqual(manifest["homepage"], self.REPOSITORY_URL)
         self.assertEqual(manifest["repository"], self.REPOSITORY_URL)
@@ -148,7 +148,7 @@ class PluginManifestTests(unittest.TestCase):
         manifest = json.loads((plugin_root / ".codex-plugin/plugin.json").read_text())
 
         self.assertEqual(manifest["name"], "token-optimizer")
-        self.assertEqual(manifest["version"], "0.1.0")
+        self.assertEqual(manifest["version"], "0.2.0")
         self.assertEqual(manifest["license"], "Apache-2.0")
         self.assertEqual(manifest["skills"], "./skills/")
         self.assertEqual(manifest["mcpServers"], "./.mcp.json")

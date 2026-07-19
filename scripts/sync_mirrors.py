@@ -21,6 +21,7 @@ MIRRORED_FILES = (
     ".mcp.json",
     "mcp/server.mjs",
     "mcp/hook-control-widget.html",
+    "mcp/context-gauges-widget.html",
     "skills/token-optimizer/SKILL.md",
     "assets/icon.png",
     "assets/logo.png",

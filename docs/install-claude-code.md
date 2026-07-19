@@ -1,7 +1,7 @@
 # Install The Claude Code Plugin
 
 Token Optimizer ships a Claude Code native package at `plugins/token-optimizer/`.
-The 0.1.0 Claude Code package is intentionally skill-only.
+The 0.2.0 Claude Code package is intentionally skill-only.
 
 It does not bundle the Python CLI, install hooks, start an MCP server, start a
 daemon, or add background behavior. Install the `token-optimizer` CLI separately

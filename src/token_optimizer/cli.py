@@ -24,6 +24,7 @@ from token_optimizer.dashboard import (
     plan_dashboard,
 )
 from token_optimizer.doctor import build_report, format_report, report_to_json
+from token_optimizer.gauges import build_gauges, format_gauges, gauges_to_json
 from token_optimizer.hooks import (
     INACTIVE_PLACEHOLDER_HOOK_MODE,
     apply_hook_file_change,
@@ -73,6 +74,12 @@ def build_parser() -> argparse.ArgumentParser:
     audit = subcommands.add_parser("audit", help="Inspect project context overhead.")
     audit.add_argument("--project", default=".", help="Project path. Defaults to cwd.")
     audit.add_argument("--json", action="store_true", help="Render the report as JSON.")
+    gauges = subcommands.add_parser(
+        "gauges",
+        help="Show compact read-only context-health gauge values.",
+    )
+    gauges.add_argument("--project", default=".", help="Project path. Defaults to cwd.")
+    gauges.add_argument("--json", action="store_true", help="Render the report as JSON.")
     dashboard = subcommands.add_parser(
         "dashboard",
         help="Generate a static HTML dashboard from audit JSON data.",
@@ -314,6 +321,14 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(audit_to_json(report) if args.json else format_audit(report))
         return 0
+    if args.command == "gauges":
+        try:
+            report = build_gauges(args.project)
+        except (AuditError, ValueError) as exc:
+            print(f"gauges: {exc}")
+            return 1
+        print(gauges_to_json(report) if args.json else format_gauges(report))
+        return 0
     if args.command == "dashboard":
         if args.dry_run and args.yes:
             print("dashboard: choose either --dry-run or --yes")
@@ -402,7 +417,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         if args.hooks_command == "install" and args.yes and not args.experimental:
             print(
-                "hooks install: Stop-hook entry installation is experimental and invokes a no-op command in 0.1.0; "
+                "hooks install: Stop-hook entry installation is experimental and invokes a no-op command in 0.2.0; "
                 "review --dry-run first, then rerun with --yes --experimental to install the no-op entry"
             )
             return 1

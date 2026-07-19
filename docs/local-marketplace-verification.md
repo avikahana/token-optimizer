@@ -40,7 +40,7 @@ codex plugin add token-optimizer@token-optimizer-local --json
 3. Compare the source package and installed cache.
 
 Check that these files match between `marketplace/plugins/token-optimizer/` and
-`~/.codex/plugins/cache/token-optimizer-local/token-optimizer/0.1.0/`:
+`~/.codex/plugins/cache/token-optimizer-local/token-optimizer/0.2.0/`:
 
 - `.codex-plugin/plugin.json`
 - `.mcp.json`
@@ -90,7 +90,7 @@ claude plugin validate ./plugins/token-optimizer
 Expected: validation passes for
 `plugins/token-optimizer/.claude-plugin/plugin.json`.
 
-3. Confirm the Claude package stays skill-only in 0.1.0.
+3. Confirm the Claude package stays skill-only in 0.2.0.
 
 Expected package contents:
 

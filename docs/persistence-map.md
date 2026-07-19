@@ -11,7 +11,7 @@ Token Optimizer should not persist anything outside the project in the MVP.
 
 > Note: `.codex/hooks.json` is a Token Optimizer-managed consent record.
 > No current host (Claude Code or Codex CLI) reads or executes entries in
-> this file, so the managed Stop-hook entry is never invoked in 0.1.0.
+> this file, so the managed Stop-hook entry is never invoked in 0.2.0.
 > Active hook behavior, if ever shipped, will target the real host hook
 > surface through a new install flow and fresh consent.
 

@@ -1,7 +1,7 @@
 ---
 name: token-optimizer
 description: This skill should be used when the user asks to "run Token Optimizer", "inspect context bloat", "summarize files for handoff", "generate a token optimizer report", "benchmark context usage", or "manage Token Optimizer hooks" in Claude Code.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Token Optimizer
@@ -13,7 +13,7 @@ hook state only when explicitly requested.
 
 This Claude Code plugin provides workflow guidance for the `token-optimizer`
 CLI. It does not bundle the Python CLI binary, install hooks, start an MCP
-server, or add background automation in 0.1.0.
+server, or add background automation in 0.2.0.
 
 ## Safety Rules
 
@@ -104,7 +104,7 @@ token-optimizer purge --project . --yes
 
 ## Hook Handling
 
-Treat hooks as advanced and experimental in 0.1.0. The managed Stop-hook entry
+Treat hooks as advanced and experimental in 0.2.0. The managed Stop-hook entry
 is intentionally no-op and uses `inactive-placeholder-v1`. The managed block
 lives in `.codex/hooks.json`, which is a Token Optimizer-managed consent
 record: no current host (Claude Code or Codex CLI) reads or executes entries

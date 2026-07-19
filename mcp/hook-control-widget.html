@@ -245,7 +245,7 @@
             <section class="section warning">
               <h2>Safety</h2>
               <ul>
-                <li>The hook entry is experimental and invokes a no-op command in 0.1.0.</li>
+                <li>The hook entry is experimental and invokes a no-op command in 0.2.0.</li>
                 <li>It does not capture transcripts, file contents, or tool output.</li>
                 <li>Future active Stop-hook behavior still requires fresh consent.</li>
               </ul>
@@ -354,7 +354,7 @@
 
       const initializeBridge = async () => {
         await rpcRequest("ui/initialize", {
-          appInfo: { name: "token-optimizer-hook-control", version: "0.1.0" },
+          appInfo: { name: "token-optimizer-hook-control", version: "0.2.0" },
           appCapabilities: {},
           protocolVersion: "2026-01-26",
         });

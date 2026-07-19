@@ -1,7 +1,7 @@
 ---
 name: token-optimizer
 description: Use when the user wants to inspect, reduce, or plan around AI coding-session context waste with Token Optimizer; run safe read-only commands first and avoid hooks unless the user explicitly asks for them.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Token Optimizer
@@ -45,7 +45,7 @@ PYTHONPATH=src python3 -m token_optimizer.cli hooks uninstall --project . --dry-
 
 `summarize` is canonical. `handoff` is an alias.
 
-The Stop hook is an advanced experimental opt-in in 0.1.0. Plugin installation
+The Stop hook is an advanced experimental opt-in in 0.2.0. Plugin installation
 does not enable it. Applying the install requires:
 
 ```bash
@@ -61,7 +61,7 @@ PYTHONPATH=src python3 -m token_optimizer.cli hooks uninstall --project . --yes
 The managed Stop-hook entry names an intentionally no-op command in
 `inactive-placeholder-v1` mode. `.codex/hooks.json` is a Token Optimizer-managed
 consent record: no current host (Claude Code or Codex CLI) reads or executes
-entries in this file, so nothing ever invokes the entry in 0.1.0. Future active
+entries in this file, so nothing ever invokes the entry in 0.2.0. Future active
 hook behavior requires a new install flow and fresh consent rather than silently
 changing old no-op installs.
 
@@ -105,6 +105,6 @@ OpenAI `tiktoken` command, optional live OpenAI provider-usage command,
 marketplace assets, and Codex plugin with local hook control plus an
 MCP control surface are implemented.
 Stop-hook entry installation is gated behind advanced `--experimental` consent
-and invokes an intentionally no-op command in 0.1.0.
+and invokes an intentionally no-op command in 0.2.0.
 Post-review safety hardening rejects symlinked parent escapes, stale apply
 plans, malformed non-UTF hooks crashes, and arbitrary dashboard overwrite paths.

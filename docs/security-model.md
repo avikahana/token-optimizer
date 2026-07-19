@@ -31,9 +31,9 @@ Default data path:
 - Hooks must include a stable marker so uninstall can remove only managed blocks.
 - Hook install must support `--dry-run`.
 - Hook uninstall must remove all managed blocks and generated files.
-- Stop hook installation is an advanced experimental opt-in for 0.1.0:
+- Stop hook installation is an advanced experimental opt-in for 0.2.0:
   `hooks install --yes` must require `--experimental`.
-- The 0.1.0 managed Stop-hook entry must invoke an intentionally no-op command
+- The 0.2.0 managed Stop-hook entry must invoke an intentionally no-op command
   and include an explicit behavior marker. Future active hook behavior requires
   fresh consent and must not silently activate older no-op hook installs.
 - Global install must require an explicit flag and warning.

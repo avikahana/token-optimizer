@@ -22,10 +22,10 @@ explicit input resolves outside the current or selected project root.
   MCP hook-control server that can open an interactive MCP control for the
   experimental Stop-hook entry, with a native approval form as the fallback.
   Both controls show the dry-run plan and write only after explicit approval;
-  the installed entry invokes an intentionally no-op command in 0.1.0.
+  the installed entry invokes an intentionally no-op command in 0.2.0.
 - The Codex plugin package does not ship global hooks, daemons, services,
   background processes, or networked control surfaces.
-- The Claude Code plugin package is skill-only in 0.1.0. It does not bundle the
+- The Claude Code plugin package is skill-only in 0.2.0. It does not bundle the
   Python CLI, install hooks, start an MCP server, start a daemon, or add
   background behavior.
 - Managed project state is constrained to `.codex/token-optimizer.json`,

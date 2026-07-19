@@ -1,6 +1,6 @@
 {
   "name": "token-optimizer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local-first context hygiene tooling for AI coding sessions.",
   "author": {
     "name": "Avi Kahana",
@@ -21,12 +21,13 @@
   "interface": {
     "displayName": "Token Optimizer",
     "shortDescription": "Inspect context and generate local audit reports.",
-    "longDescription": "Token Optimizer is a local-first context hygiene tool for AI coding sessions. It starts with explicit, read-only inspection workflows and avoids background daemons, network calls, broad hooks, and raw transcript or tool-output capture by default. Audit reports are generated as local HTML files under .codex/token-optimizer/. Expert mode is available inside the generated report and reveals the raw audit JSON.",
+    "longDescription": "Token Optimizer is a local-first context hygiene tool for AI coding sessions. It starts with explicit, read-only inspection workflows and avoids background daemons, network calls, broad hooks, and raw transcript or tool-output capture by default. Audit reports are generated as local HTML files under .codex/token-optimizer/. Expert mode is available inside the generated report and reveals the raw audit JSON. Context gauges show read-only project health, static token estimate, and signal counts, recomputed on demand with no daemon and no persistence.",
     "developerName": "Avi Kahana",
     "category": "Productivity",
     "capabilities": [
       "Local",
       "Read-only",
+      "Context gauges",
       "Interactive hook control",
       "MCP control",
       "Static report",
@@ -37,6 +38,7 @@
     "termsOfServiceURL": "https://github.com/avikahana/token-optimizer/blob/main/TERMS.md",
     "defaultPrompt": [
       "Health check: run Token Optimizer doctor for this project.",
+      "Context gauges: open the read-only Token Optimizer context gauges for this project.",
       "Generate report: create a local Token Optimizer audit report for this project.",
       "Hook control: open the interactive Stop hook MCP control."
     ],

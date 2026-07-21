@@ -1,5 +1,24 @@
 # Release Notes
 
+## 0.2.0 - Context Gauges
+
+Read-only context-health gauges across the CLI, MCP server, and a new widget.
+
+Added:
+
+- `token-optimizer gauges` and `gauges --json`: compact read-only gauge values
+  (score, static token estimate, signal counts, outline candidates, managed
+  hook state) computed on demand from audit data
+- read-only gauges MCP tools on the local MCP server
+- `context-gauges-widget.html`: local visual gauges surface for the Codex
+  plugin, mirrored into the marketplace plugin package
+- README demo section with real `audit` and `gauges` output
+
+Unchanged by design:
+
+- no daemon, no default network calls, no transcript capture; gauges recompute
+  only when explicitly invoked
+
 ## 0.1.0 - Initial Release
 
 Initial local-first Token Optimizer baseline.

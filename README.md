@@ -23,6 +23,35 @@
   default.
 </p>
 
+<h2 align="center">30-Second Demo</h2>
+
+<p align="center">
+  Point <code>audit</code> at any project and get a context-health score plus
+  concrete signals — no config, no writes, no network:
+</p>
+
+```console
+$ token-optimizer audit --project .
+Token Optimizer Audit
+Project: ~/code/my-project
+Score: 11/100
+Scanned files: 110
+
+Signals:
+- [warning] large Markdown/docs file: README.md (527 lines, 22360 bytes)
+  Suggestion: Run `token-optimizer outline README.md` before rereading the full file.
+- [warning] large source file: src/audit.py (571 lines, 19933 bytes)
+  Suggestion: Run `token-optimizer outline src/audit.py` and inspect focused sections.
+- [info] generated/cache directory present: dist
+  Suggestion: Keep generated or cache directories out of agent context unless explicitly needed.
+
+$ token-optimizer gauges --project .
+Score: 11/100
+Static token estimate (ceil(bytes / 4)): 119395
+Signals: 11 info, 7 warning
+Outline candidates: 10
+```
+
 <h2 align="center">Reading Map</h2>
 
 <table align="center">

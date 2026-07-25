@@ -19,6 +19,7 @@ PYTHONPATH=src python3 -m unittest tests.test_cli.CliTests.test_doctor_json -q
 # Run the CLI from source (no install needed)
 PYTHONPATH=src python3 -m token_optimizer.cli doctor
 PYTHONPATH=src python3 -m token_optimizer.cli benchmark --fixture benchmarks/fixtures/common-python-cli-session
+PYTHONPATH=src python3 -m token_optimizer.cli gauges --json
 
 # After editing any root plugin file (.codex-plugin/, .mcp.json, mcp/, skills/, assets/)
 python3 scripts/sync_mirrors.py
@@ -60,7 +61,11 @@ Symlinked-parent escapes must be rejected after resolution. `limits.py` caps who
 
 Never mix or sum measurement categories in reports or docs — `docs/benchmarking.md` defines what may and may not be claimed. `tests/test_no_network.py` asserts default code paths import no network modules.
 
-### The hook is intentionally a no-op in 0.1.0
+### Context gauges (added in 0.2.0)
+
+`gauges.py` follows the standard command contract (`build_gauges` / `format_gauges` / `gauges_to_json`) and is strictly read-only: it derives a compact context-health report (score, static token estimate, signal counts) from the static audit, using only the `static_estimate` measurement label. The MCP server exposes it as `token_optimizer_context_gauges` and `token_optimizer_context_gauges_app` by shelling out to the Python CLI with `--json` — so the Node and Python sides share one implementation. `mcp/context-gauges-widget.html` and `mcp/server.mjs` are mirrored files; `sync_mirrors.py` applies after edits.
+
+### The hook is intentionally a no-op (still true in 0.2.0)
 
 `hooks.py` installs a Stop-hook entry whose command (`token-optimizer summarize --hook stop --hook-mode inactive-placeholder-v1`) deliberately does nothing when invoked — `.codex/hooks.json` is a consent record, not an active hook surface. Install requires `--yes --experimental` after a dry run. Do not make the hook do real work without a new consent flow; tests and docs assume inactivity.
 

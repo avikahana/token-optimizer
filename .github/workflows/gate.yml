@@ -1,0 +1,80 @@
+name: Code Review Gate Bot
+
+# Adapted from avikahana/github-code-review-gate-bot's own gate.yml: local
+# `uses: ./` paths become repo references (the gate-bot repo is private; its
+# Actions access policy is set to "repositories owned by avikahana").
+
+on:
+  pull_request:
+    # `labeled` is the on-demand trigger: the /gatebot command workflow applies
+    # the `gatebot` label, which re-delivers a full pull_request payload here.
+    types: [opened, synchronize, reopened, labeled]
+
+# One live run per PR: racing runs made the find-then-create sticky-comment
+# upsert post duplicates.
+concurrency:
+  group: gatebot-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write  # per-analyzer check runs in the PR checks view
+
+jobs:
+  gate:
+    name: Code Review Gate Bot
+    # Cost flag: every gate run spends Anthropic API credit, so auto-runs on
+    # PR events are opt-in via the repo variable GATEBOT_AUTO=true (Settings →
+    # Secrets and variables → Actions → Variables). With the flag unset or not
+    # "true", the gate runs only on demand: the `gatebot` label applied by the
+    # /gatebot comment command. A skipped run satisfies a required check, so
+    # flag-off also means merges are not blocked on a review having happened.
+    if: >-
+      (github.event.action == 'labeled' && github.event.label.name == 'gatebot') ||
+      (github.event.action != 'labeled' && vars.GATEBOT_AUTO == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Registers every gitleaks-detected secret with ::add-mask:: BEFORE any
+      # step can print it — the security reviewer below logs its raw findings
+      # (secret values included) in its own step log otherwise.
+      - uses: avikahana/github-code-review-gate-bot/mask-secrets@main
+
+      # Sibling step: Anthropic's security reviewer. Its results JSON feeds the
+      # gate's `security` check, so our policy engine owns the blocking decision.
+      # The action publishes no version tags; pinned to a commit SHA on main.
+      - uses: anthropics/claude-code-security-review@0c6a49f1fa56a1d472575da86a94dbc1edb78eda
+        id: security
+        # If the security reviewer itself crashes, run the gate anyway; its
+        # `security` check falls back to "skipped" when no results file exists.
+        continue-on-error: true
+        with:
+          claude-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          comment-pr: false
+          upload-results: true
+          # Without this the action scans only a PR's first commit (per-PR
+          # marker cache) and later pushes would show security as skipped.
+          run-every-commit: true
+
+      # The reviewer runs inside its own action directory, so its `results-file`
+      # output is relative to that directory, not the workspace. Resolve it to
+      # an absolute path; empty output means the gate's security check skips.
+      - name: Locate security-review results
+        id: security-results
+        if: always()
+        run: |
+          f="$(find "$RUNNER_WORKSPACE/../_actions/anthropics/claude-code-security-review" \
+            -name claudecode-results.json -print -quit 2>/dev/null || true)"
+          if [ -z "$f" ]; then
+            echo "::warning::security-review results not found under _actions; the gate's security check will be skipped"
+          fi
+          echo "path=$f" >> "$GITHUB_OUTPUT"
+
+      - uses: avikahana/github-code-review-gate-bot@main
+        with:
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          security-review-results: ${{ steps.security-results.outputs.path }}

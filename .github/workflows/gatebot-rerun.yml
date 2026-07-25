@@ -1,0 +1,73 @@
+name: GateBot rerun command
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write # react to comments; create/apply the `gatebot` trigger label
+  # write, not read: the 🚀 reaction targets a comment on a PR, and GitHub's token
+  # model gates PR-attached comment reactions on pull-requests, not issues —
+  # with read this step 403s ("Resource not accessible by integration").
+  pull-requests: write # react to the triggering comment
+  contents: read
+
+jobs:
+  rerun:
+    name: Run gate on /gatebot
+    # Only PR comments, only "/gatebot", only from users with push access —
+    # a gate run spends Anthropic API credit, so drive-by comments must not trigger it.
+    # The prefix check here is a cheap prefilter; the exact match happens in the
+    # first step, because the GitHub web UI submits comments with a trailing
+    # newline ("/gatebot\r\n") that expression-level equality can't trim.
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/gatebot') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
+               github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Match the command exactly
+        id: cmd
+        env:
+          BODY: ${{ github.event.comment.body }}
+        run: |
+          first_line="$(printf '%s' "$BODY" | head -n1 | tr -d '\r' | sed 's/[[:space:]]*$//')"
+          case "$first_line" in
+            "/gatebot"|"/gatebot "*) echo "matched=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::notice::comment starts with /gatebot but is not the command — ignoring" ;;
+          esac
+
+      - name: Acknowledge the command
+        if: steps.cmd.outputs.matched == 'true'
+        # The reaction is a courtesy signal; if it fails, the rerun must still
+        # happen. Before this guard, a 403 here killed the job ahead of the
+        # rerun step — the command's actual purpose.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh api -X POST
+          "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions"
+          -f content=rocket
+
+      - name: Trigger an on-demand gate run
+        if: steps.cmd.outputs.matched == 'true'
+        # Applying the `gatebot` label fires a pull_request `labeled` event,
+        # which gate.yml accepts even when GATEBOT_AUTO is off. A label toggle
+        # (remove, then add) rather than a run rerun: reruns re-evaluate the
+        # gate job's `if` against the original event and stay skipped, and a
+        # label re-add fires a fresh event even when a previous command left
+        # the label on the PR.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          gh label create gatebot \
+            --color FBCA04 --description "on-demand GateBot review trigger" \
+            2>/dev/null || true
+          gh api -X DELETE "repos/$REPO/issues/$PR/labels/gatebot" >/dev/null 2>&1 || true
+          gh api -X POST "repos/$REPO/issues/$PR/labels" -f "labels[]=gatebot" >/dev/null
+          echo "::notice::gatebot label applied to PR #$PR — on-demand gate run starting"
